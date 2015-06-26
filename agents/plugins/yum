@@ -1,0 +1,17 @@
+#!/bin/bash
+
+if [[ -e /etc/redhat-release && `which yum` ]] &>/dev/null ; then
+    echo "<<<yum>>>"
+
+    LATEST_KERNEL=$(yum -q -C --noplugins list installed kernel | grep "\." | tail -n1 | awk '{print $2};')
+    RUNNING_KERNEL=$(cat /proc/version | awk '{print $3}')
+    
+    if [[ "$RUNNING_KERNEL" == "$LATEST_KERNEL"* ]]
+    then
+        echo "no"
+    else
+        echo "yes"
+    fi
+
+    waitmax 25 /usr/bin/yum -C --noplugins list updates | grep "\." | cut -d' ' -f1 | wc -l || echo "-1"
+fi

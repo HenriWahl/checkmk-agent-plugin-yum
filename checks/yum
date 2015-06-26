@@ -1,0 +1,82 @@
+#!/usr/bin/env python
+#
+# Check_MK YUM Plugin - Check for upgradeable packages.
+#
+# Copyright 2015, Henri Wahl <h.wahl@ifw-dresden.de>
+#
+# Based on:
+#
+# Check_MK APT-NG Plugin - Check for upgradeable packages.
+#
+# Copyright 2012, Stefan Schlesinger <sts@ono.at>
+# Copyright 2015, Karsten Schoeke <karsten.schoeke@geobasis-bb.de>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+#
+# Example Agent Output:
+#
+# <<<yum>>>
+# yes
+# 4
+
+
+def inventory_yum(checkname, info):
+    if len(info) > 0:
+        return [(None, None)]
+
+# the check function
+def check_yum(_no_item, _no_params, info):
+    level        = 0
+    msg          = ''
+    reboot_req   = 'no'
+    packages     = -1
+    
+    # Parse the agent output
+    if len(info) > 0:
+        reboot_req   = info[0][0]
+        if not reboot_req in ('yes', 'no'):
+            reboot_req = ''
+        
+    if len(info) > 1:
+        try:
+            packages = int(info[1][0])
+        except:
+            packages = -1
+            
+        if packages < 0:
+            level = 3
+            msg = 'No package information available' + str(packages)
+        elif packages > 0:
+            level = 1
+            if packages == 1: s = ''
+            else: s = 's'
+            msg = '%s update%s available' % (packages, s) 
+
+    if (reboot_req == "yes") and (level == 0):
+        level = 2 
+        msg = "reboot required"
+
+    if level > 0:
+        return (level, "%s" % msg)
+    else:
+        return (level, "All packages are up to date")
+
+check_info["yum"] = {
+        "check_function"            : check_yum,
+        "service_description"       : "YUM",
+        "has_perfdata"              : False,
+        "inventory_function"        : inventory_yum,
+        "group"                     : "yum",
+}
