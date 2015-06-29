@@ -1,8 +1,8 @@
 #!/bin/bash
 
-if [[ -e /etc/redhat-release && `which yum` ]] &>/dev/null ; then
-    echo "<<<yum>>>"
+echo "<<<yum>>>"
 
+if [ -z $(pgrep -f "python /usr/bin/yum") ]; then
     LATEST_KERNEL=$(yum -q -C --noplugins list installed kernel | grep "\." | tail -n1 | awk '{print $2};')
     RUNNING_KERNEL=$(cat /proc/version | awk '{print $3}')
     
