@@ -1,17 +1,87 @@
 #!/bin/bash
 
+BOOT_REQUIRED=no
+UPDATES=0
+
 echo "<<<yum>>>"
 
-if [ -z $(pgrep -f "python /usr/bin/yum") ]; then
-    LATEST_KERNEL=$(yum -q -C --noplugins list installed kernel | grep "\." | tail -n1 | awk '{print $2};')
-    RUNNING_KERNEL=$(cat /proc/version | awk '{print $3}')
-    
-    if [[ "$RUNNING_KERNEL" == "$LATEST_KERNEL"* ]]
-    then
-        echo "no"
-    else
-        echo "yes"
-    fi
+# get curent yum state - use cache directory contents as fingerprint 
+YUM_CURRENT="$(ls -lR /var/cache/yum/)"
 
-    waitmax 25 /usr/bin/yum -C --noplugins list updates | grep "\." | cut -d' ' -f1 | wc -l || echo "-1"
+# check if cached listing of /var/cache/yum already exists - create empty one otherwise
+if [ ! -e $MK_VARDIR/cache/yum_state.cache ]
+then
+    touch $MK_VARDIR/cache/yum_state.cache
+elif [ ! -f $MK_VARDIR/cache/yum_state.cache ] || [ -L $MK_VARDIR/cache/yum_state.cache ]
+then
+    # something is wrong here...
+    echo "invalid cache file"
+    exit
 fi
+
+# check if cached check result already exists and is nothing but a file
+if [ ! -e $MK_VARDIR/cache/yum_check.cache ]
+then
+    touch $MK_VARDIR/cache/yum_check.cache
+elif [ ! -f $MK_VARDIR/cache/yum_check.cache ] || [ -L $MK_VARDIR/cache/yum_check.cache ]
+then
+    # something is wrong here...
+    echo "invalid cache file"
+    exit
+fi
+
+# get cached information
+YUM_CACHED="$(cat $MK_VARDIR/cache/yum_state.cache)"
+
+# compare current and cached state
+if [ "$YUM_CURRENT" != "$YUM_CACHED" ] || [ ! -s $MK_VARDIR/cache/yum_check.cache ]
+then
+    if [ -z $(pgrep -f "python /usr/bin/yum") ]; then
+        LATEST_KERNEL=$(yum -q -C --noplugins list installed kernel | grep "\." | tail -n1 | awk '{print $2};')
+        RUNNING_KERNEL=$(cat /proc/version | awk '{print $3}')
+        
+        if [[ "$RUNNING_KERNEL" == "$LATEST_KERNEL"* ]]
+        then
+            BOOT_REQUIRED="no"
+        else
+            BOOT_REQUIRED="yes"
+        fi
+
+        UPDATES=$(waitmax 25 /usr/bin/yum -C --noplugins list updates | grep "\." | cut -d' ' -f1 | wc -l || echo "-1")
+
+        echo $BOOT_REQUIRED
+        echo $UPDATES
+        
+        # check if cached listing of /var/cache/yum already exists
+        if [ ! -L $MK_VARDIR/cache/yum_state.cache ] && [ ! -d $MK_VARDIR/cache/yum_state.cache ]
+        then
+            # cache new yum state for future checks
+            echo "$YUM_CURRENT" > $MK_VARDIR/cache/yum_state.cache
+        else
+            # something is wrong here...
+            exit
+        fi
+                
+        # cache check results
+        # check if cached check result already exists and is nothing but a file
+        if [ -f $MK_VARDIR/cache/yum_check.cache ] || [ ! -L $MK_VARDIR/cache/yum_check.cache ]
+        then
+            echo $BOOT_REQUIRED > $MK_VARDIR/cache/yum_check.cache
+            echo $UPDATES >> $MK_VARDIR/cache/yum_check.cache
+        else
+            # something is wrong here...
+            echo "invalid cache file"
+            exit
+        fi
+    fi
+else
+    if [ ! -s $MK_VARDIR/cache/yum_check.cache ]
+    then
+       
+        echo $BOOT_REQUIRED
+        echo $UPDATES
+    else
+        cat $MK_VARDIR/cache/yum_check.cache
+    fi
+fi
+
