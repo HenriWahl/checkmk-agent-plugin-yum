@@ -15,7 +15,7 @@ then
 elif [ ! -f $MK_VARDIR/cache/yum_state.cache ] || [ -L $MK_VARDIR/cache/yum_state.cache ]
 then
     # something is wrong here...
-    echo "invalid cache file"
+    echo "invalid state cache file"
     exit
 fi
 
@@ -26,7 +26,7 @@ then
 elif [ ! -f $MK_VARDIR/cache/yum_check.cache ] || [ -L $MK_VARDIR/cache/yum_check.cache ]
 then
     # something is wrong here...
-    echo "invalid cache file"
+    echo "invalid check cache file"
     exit
 fi
 
