@@ -15,7 +15,7 @@ then
 elif [ ! -f $MK_VARDIR/cache/yum_state.cache ] || [ -L $MK_VARDIR/cache/yum_state.cache ]
 then
     # something is wrong here...
-    echo "invalid state cache file"
+    echo "invalid cache file"
     exit
 fi
 
@@ -26,8 +26,20 @@ then
 elif [ ! -f $MK_VARDIR/cache/yum_check.cache ] || [ -L $MK_VARDIR/cache/yum_check.cache ]
 then
     # something is wrong here...
-    echo "invalid check cache file"
+    echo "invalid cache file"
     exit
+fi
+
+# check if system has rebooted - if so, remove cached check file to avoid wrong "reboot required"-state
+RUNNING_SECS=$(cat /proc/uptime | cut -d" " -f1 | cut -d"." -f1)
+
+# assume 120 seconds for reboot being enough
+if (( $RUNNING_SECS < 120 ))
+then
+    # remove pre-reboot cache which reqires reboot
+    rm $MK_VARDIR/cache/yum_check.cache
+    # create empty check cache
+    touch $MK_VARDIR/cache/yum_check.cache
 fi
 
 # get cached information
@@ -70,17 +82,18 @@ then
             echo $UPDATES >> $MK_VARDIR/cache/yum_check.cache
         else
             # something is wrong here...
-            echo "invalid cache file"
+            echo "invalid check cache file"
             exit
         fi
     fi
 else
     if [ ! -s $MK_VARDIR/cache/yum_check.cache ]
     then
-       
+        # fill cache file
         echo $BOOT_REQUIRED
         echo $UPDATES
     else
+        # use cache file
         cat $MK_VARDIR/cache/yum_check.cache
     fi
 fi
