@@ -52,7 +52,7 @@ then
         LATEST_KERNEL=$(yum -q -C --noplugins list installed kernel | grep "\." | tail -n1 | awk '{print $2};')
         RUNNING_KERNEL=$(cat /proc/version | awk '{print $3}')
         
-        if [[ "$RUNNING_KERNEL" == "$LATEST_KERNEL"* ]]
+        if [[ "$RUNNING_KERNEL" =~ "$LATEST_KERNEL"* ]]
         then
             BOOT_REQUIRED="no"
         else
