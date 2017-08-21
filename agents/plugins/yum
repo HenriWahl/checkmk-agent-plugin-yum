@@ -49,7 +49,7 @@ YUM_CACHED="$(cat $MK_VARDIR/cache/yum_state.cache)"
 if [ "$YUM_CURRENT" != "$YUM_CACHED" ] || [ ! -s $MK_VARDIR/cache/yum_check.cache ]
 then
     if [ -z $(pgrep -f "python /usr/bin/yum") ]; then
-        LATEST_KERNEL=$(yum -q -C --noplugins list installed kernel | grep "\." | tail -n1 | awk '{print $2};')
+        LATEST_KERNEL=$(yum -q -C --noplugins list installed | egrep "^(vz)?kernel\." | grep "\." | tail -n1 | awk '{print $2};')
         RUNNING_KERNEL=$(cat /proc/version | awk '{print $3}')
         
         if [[ "$RUNNING_KERNEL" == "$LATEST_KERNEL"* ]]
