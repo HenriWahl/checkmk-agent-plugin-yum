@@ -9,6 +9,7 @@ description:
  into the {plugins} directory of your agent.
 
  The check gets critical if kernel updates require a reboot.
+ This state can be overriden via a WATO rule.
  It gets warning state if there are any updates available.
 
 inventory:

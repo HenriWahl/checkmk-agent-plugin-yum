@@ -3,6 +3,7 @@
 # Check_MK YUM Plugin - Check for upgradeable packages.
 #
 # Copyright 2015, Henri Wahl <h.wahl@ifw-dresden.de>
+# Copyright 2018, Moritz Schlarb <schlarbm@uni-mainz.de>
 #
 # Based on:
 #
@@ -32,12 +33,16 @@
 # 4
 
 
+factory_settings["yum_default_levels"] = {
+    "reboot_req" : 2,
+}
+
 def inventory_yum(checkname, info):
     if len(info) > 0:
-        return [(None, None)]
+        return [(None, {})]
 
 # the check function
-def check_yum(_no_item, _no_params, info):
+def check_yum(_no_item, params, info):
     level        = 0
     msg          = ''
     reboot_req   = 'no'
@@ -65,7 +70,7 @@ def check_yum(_no_item, _no_params, info):
             msg = '%s update%s available' % (packages, s) 
 
     if (reboot_req == "yes") and (level == 0):
-        level = 2 
+        level = params["reboot_req"]
         msg = "reboot required"
 
     if level > 0:
@@ -79,4 +84,5 @@ check_info["yum"] = {
         "has_perfdata"              : False,
         "inventory_function"        : inventory_yum,
         "group"                     : "yum",
+        "default_levels_variable"   : "yum_default_levels",
 }
