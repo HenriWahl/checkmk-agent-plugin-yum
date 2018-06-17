@@ -70,7 +70,11 @@ def check_yum(_no_item, params, info):
             msg = '%s update%s available' % (packages, s) 
 
     if (reboot_req == "yes") and (level == 0):
-        level = params["reboot_req"]
+        # fallback for < 2.0.6
+        if params == None:
+            level = 2
+        else:
+            level = params["reboot_req"]
         msg = "reboot required"
 
     if level > 0:
