@@ -10,7 +10,9 @@ def bake_yum(opsys, conf, conf_dir, plugins_dir):
             shutil.copy2(local_agents_dir + "/plugins/yum", target_dir + "/yum")
         except:
             # see https://github.com/HenriWahl/checkmk-agent-plugin-yum/issues/5#issuecomment-311061650
-            shutil.copy2(cmk.paths.local_agents_dir + "/plugins/yum", target_dir + "/yum")
+
+            # in CheckMK v 1.6 cmk.paths is changed to cmk.utils.paths
+            shutil.copy2(cmk.utils.paths.local_agents_dir + "/plugins/yum", target_dir + "/yum")
     os.chmod(target_dir + "/yum", 0755)
 
 bakery_info["yum"] = {
