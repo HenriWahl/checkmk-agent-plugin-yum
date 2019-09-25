@@ -7,7 +7,7 @@ def bake_yum(opsys, conf, conf_dir, plugins_dir):
         os.makedirs(target_dir)
     if conf:
         try:
-            shutil.copy2(local_agents_dir + "/plugins/yum", target_dir + "/yum")
+            shutil.copy2(cmk.paths.local_agents_dir + "/plugins/yum", target_dir + "/yum")
         except:
             # see https://github.com/HenriWahl/checkmk-agent-plugin-yum/issues/5#issuecomment-311061650
 
