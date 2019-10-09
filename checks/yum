@@ -37,7 +37,7 @@ factory_settings["yum_default_levels"] = {
     "reboot_req" : 2,
 }
 
-def inventory_yum(checkname, info):
+def inventory_yum(info):
     if len(info) > 0:
         return [(None, {})]
 
