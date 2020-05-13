@@ -20,14 +20,24 @@ then
 fi
 
 # check if cached check result already exists and is nothing but a file
-if [ ! -e $MK_VARDIR/cache/yum_check.cache ]
+# newer CMK (1.6?) shall be checked to be backward compatible
+YUM_CACHE_FILE="$MK_VARDIR/cache/$(ls -t1 $MK_VARDIR/cache | grep yum.cache)" 
+# cut off the .new suffix as it is vanished later anyway
+YUM_CACHE_FILE="${YUM_CACHE_FILE%%.new}"
+
+if [ ! -e "$YUM_CACHE_FILE" && ! -f "$YUM_CACHE_FILE" ]
 then
-    touch $MK_VARDIR/cache/yum_check.cache
-elif [ ! -f $MK_VARDIR/cache/yum_check.cache ] || [ -L $MK_VARDIR/cache/yum_check.cache ]
-then
-    # something is wrong here...
-    echo "invalid cache file"
-    exit
+    # fallback without plugin
+    if [ ! -e $MK_VARDIR/cache/yum_check.cache ]
+    then
+        touch $MK_VARDIR/cache/yum_check.cache
+	YUM_CACHE_FILE=$MK_VARDIR/cache/yum_check.cache
+    elif [ ! -f $MK_VARDIR/cache/yum_check.cache ] || [ -L $MK_VARDIR/cache/yum_check.cache ]
+    then
+        # something is wrong here...
+        echo "invalid cache file"
+        exit
+    fi
 fi
 
 # check if system has rebooted - if so, remove cached check file to avoid wrong "reboot required"-state
@@ -37,16 +47,16 @@ RUNNING_SECS=$(cat /proc/uptime | cut -d" " -f1 | cut -d"." -f1)
 if (( $RUNNING_SECS < 120 ))
 then
     # remove pre-reboot cache which reqires reboot
-    rm $MK_VARDIR/cache/yum_check.cache
+    rm $YUM_CACHE_FILE
     # create empty check cache
-    touch $MK_VARDIR/cache/yum_check.cache
+    touch $YUM_CACHE_FILE
 fi
 
 # get cached information
-YUM_CACHED="$(cat $MK_VARDIR/cache/yum_state.cache)"
+YUM_CACHED="$(cat $YUM_CACHE_FILE)"
 
 # compare current and cached state
-if [ "$YUM_CURRENT" != "$YUM_CACHED" ] || [ ! -s $MK_VARDIR/cache/yum_check.cache ]
+if [ "$YUM_CURRENT" != "$YUM_CACHED" ] || [ ! -s $YUM_CACHE_FILE ]
 then
     if [ -z $(pgrep -f "python /usr/bin/yum") ]; then
         LATEST_KERNEL=$(yum -q -C --noplugins --debuglevel 0 list installed | egrep "^(vz)?kernel(|-uek)\." | grep "\." | tail -n1 | awk '{print $2};')
@@ -76,10 +86,10 @@ then
                 
         # cache check results
         # check if cached check result already exists and is nothing but a file
-        if [ -f $MK_VARDIR/cache/yum_check.cache ] || [ ! -L $MK_VARDIR/cache/yum_check.cache ]
+        if [ -f $YUM_CACHE_FILE ] || [ ! -L $YUM_CACHE_FILE ]
         then
-            echo $BOOT_REQUIRED > $MK_VARDIR/cache/yum_check.cache
-            echo $UPDATES >> $MK_VARDIR/cache/yum_check.cache
+            echo $BOOT_REQUIRED > $YUM_CACHE_FILE
+            echo $UPDATES >> $YUM_CACHE_FILE
         else
             # something is wrong here...
             echo "invalid check cache file"
@@ -87,14 +97,14 @@ then
         fi
     fi
 else
-    if [ ! -s $MK_VARDIR/cache/yum_check.cache ]
+    if [ ! -s $YUM_CACHE_FILE ]
     then
         # fill cache file
         echo $BOOT_REQUIRED
         echo $UPDATES
     else
         # use cache file
-        cat $MK_VARDIR/cache/yum_check.cache
+        cat $YUM_CACHE_FILE
     fi
 fi
 
