@@ -69,7 +69,7 @@ then
             BOOT_REQUIRED="yes"
         fi
 
-        UPDATES=$(waitmax 25 /usr/bin/yum -C --noplugins list updates | grep "\." | cut -d' ' -f1 | wc -l || echo "-1")
+        UPDATES=$(waitmax 25 /usr/bin/yum -C --noplugins --quiet list updates | grep "\." | cut -d' ' -f1 | wc -l || echo "-1")
 
         echo $BOOT_REQUIRED
         echo $UPDATES
