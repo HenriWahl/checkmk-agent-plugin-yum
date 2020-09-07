@@ -6,7 +6,7 @@ UPDATES=0
 echo "<<<yum>>>"
 
 # get curent yum state - use cache directory contents as fingerprint 
-YUM_CURRENT="$(ls -lR /var/cache/yum/)"
+YUM_CURRENT="$(ls -lR /var/cache/yum/ || ls -lR /var/cache/dnf/)"
 
 # check if cached listing of /var/cache/yum already exists - create empty one otherwise
 if [ ! -e $MK_VARDIR/cache/yum_state.cache ]
