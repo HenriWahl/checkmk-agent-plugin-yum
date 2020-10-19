@@ -59,7 +59,7 @@ YUM_CACHED="$(cat $YUM_CACHE_FILE)"
 if [ "$YUM_CURRENT" != "$YUM_CACHED" ] || [ ! -s $YUM_CACHE_FILE ]
 then
     if [ -z $(pgrep -f "python /usr/bin/yum") ]; then
-        LATEST_KERNEL=$(yum -q -C --noplugins --debuglevel 0 list installed | egrep "^(vz)?kernel(|-uek)\." | grep "\." | tail -n1 | awk '{print $2};')
+        LATEST_KERNEL=$(yum -q -C --noplugins --debuglevel 0 list installed | egrep "^(vz)?kernel(|-(uek|ml|lt))\." | grep "\." | tail -n1 | awk '{print $2};')
         RUNNING_KERNEL=$(cat /proc/version | awk '{print $3}' | sed 's/.x86_64//g')
         
         if [[ "$RUNNING_KERNEL" == "$LATEST_KERNEL"* ]]
