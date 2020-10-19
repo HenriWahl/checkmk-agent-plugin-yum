@@ -47,6 +47,7 @@ def check_yum(_no_item, params, info):
     msg          = ''
     reboot_req   = 'no'
     packages     = -1
+    perfdata     = []
     
     # Parse the agent output
     if len(info) > 0:
@@ -68,6 +69,9 @@ def check_yum(_no_item, params, info):
             if packages == 1: s = ''
             else: s = 's'
             msg = '%s update%s available' % (packages, s) 
+            
+        if packages >= 0:
+            perfdata.append( ("count", packages, 0) )
 
     if (reboot_req == "yes") and (level == 0):
         # fallback for < 2.0.6
@@ -78,14 +82,14 @@ def check_yum(_no_item, params, info):
         msg = "reboot required"
 
     if level > 0:
-        return (level, "%s" % msg)
+        return (level, "%s" % msg, perfdata)
     else:
-        return (level, "All packages are up to date")
+        return (level, "All packages are up to date", perfdata)
 
 check_info["yum"] = {
         "check_function"            : check_yum,
         "service_description"       : "YUM",
-        "has_perfdata"              : False,
+        "has_perfdata"              : True,
         "inventory_function"        : inventory_yum,
         "group"                     : "yum",
         "default_levels_variable"   : "yum_default_levels",
