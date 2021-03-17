@@ -4,6 +4,7 @@
 #
 # Copyright 2015, Henri Wahl <h.wahl@ifw-dresden.de>
 # Copyright 2018, Moritz Schlarb <schlarbm@uni-mainz.de>
+# Copyright 2021, Marco Lenhardt <marco.lenhardt@ontec.at>
 #
 # Based on:
 #
@@ -30,11 +31,14 @@
 #
 # <<<yum>>>
 # yes
+# 32
 # 4
 
 
 factory_settings["yum_default_levels"] = {
     "reboot_req" : 2,
+    "normal": 1,
+    "security": 2,
 }
 
 def inventory_yum(info):
@@ -47,6 +51,7 @@ def check_yum(_no_item, params, info):
     msg          = ''
     reboot_req   = 'no'
     packages     = -1
+    security_packages = -1
     perfdata     = []
     
     # Parse the agent output
@@ -60,31 +65,35 @@ def check_yum(_no_item, params, info):
             packages = int(info[1][0])
         except:
             packages = -1
+
+        try:
+            security_packages = int(info[2][0])
+        except:
+            security_packages = -1
             
         if packages < 0:
             level = 3
-            msg = 'No package information available' + str(packages)
-        elif packages > 0:
-            level = 1
-            if packages == 1: s = ''
-            else: s = 's'
-            msg = '%s update%s available' % (packages, s) 
-            
-        if packages >= 0:
-            perfdata.append( ("count", packages, 0) )
+            yield level, 'No package information available'
+        elif packages == 0 and security_packages <= 0:
+            yield 0, "All packages are up to date"
 
-    if (reboot_req == "yes") and (level == 0):
+        elif packages > 0:
+            level = params["normal"]
+            yield level, "%d updates available" % packages, [("normal_updates", packages)]
+
+        if security_packages > 0:
+            level = params["security"]
+            yield level, "%d security updates available" % security_packages, [("security_updates", security_packages)]
+            
+
+    if (reboot_req == "yes"):
         # fallback for < 2.0.6
         if params == None:
             level = 2
         else:
             level = params["reboot_req"]
-        msg = "reboot required"
+        yield level,  "reboot required"
 
-    if level > 0:
-        return (level, "%s" % msg, perfdata)
-    else:
-        return (level, "All packages are up to date", perfdata)
 
 check_info["yum"] = {
         "check_function"            : check_yum,
