@@ -2,6 +2,7 @@
 
 BOOT_REQUIRED=no
 UPDATES=0
+SECURITY_UPDATES=0
 
 echo "<<<yum>>>"
 
@@ -71,8 +72,20 @@ then
 
         UPDATES=$(waitmax 25 /usr/bin/yum -C --noplugins --quiet list updates | grep "\." | cut -d' ' -f1 | wc -l || echo "-1")
 
+	# check if --security is available
+	waitmax 10 /usr/bin/yum -C --noplugins --quiet --security list updates > /dev/null 2>&1
+	if [ $? -eq 0 ]
+	then
+	        SECURITY_UPDATES=$(waitmax 25 /usr/bin/yum -C --noplugins --quiet --security list updates | grep "\." | cut -d' ' -f1 | wc -l || echo "-1")
+	else
+	# --security not supported with this yum version
+	# maybe the yum-plugin-security package is needed (RH 6)
+	        SECURITY_UPDATES="-2"
+	fi
+
         echo $BOOT_REQUIRED
         echo $UPDATES
+        echo $SECURITY_UPDATES
         
         # check if cached listing of /var/cache/yum already exists
         if [ ! -L $MK_VARDIR/cache/yum_state.cache ] && [ ! -d $MK_VARDIR/cache/yum_state.cache ]
@@ -90,6 +103,7 @@ then
         then
             echo $BOOT_REQUIRED > $YUM_CACHE_FILE
             echo $UPDATES >> $YUM_CACHE_FILE
+            echo $SECURITY_UPDATES >> $YUM_CACHE_FILE
         else
             # something is wrong here...
             echo "invalid check cache file"
@@ -102,6 +116,7 @@ else
         # fill cache file
         echo $BOOT_REQUIRED
         echo $UPDATES
+        echo $SECURITY_UPDATES
     else
         # use cache file
         cat $YUM_CACHE_FILE

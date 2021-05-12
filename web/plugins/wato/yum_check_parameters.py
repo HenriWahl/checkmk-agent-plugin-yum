@@ -20,6 +20,16 @@ register_check_parameters(
                     title = _("State when a reboot is required"),
                     default_value = 2,
             )),
+            ("normal",
+                MonitoringState(
+                    title = _("State when normal updates are available"),
+                    default_value = 1,
+            )),
+            ("security",
+                MonitoringState(
+                    title = _("State when security updates are available"),
+                    default_value = 2,
+            )),
         ]
     ),
     None,
