@@ -10,7 +10,7 @@ UPDATES=0
 YUM_STATE_CACHE=$MK_VARDIR/cache/yum_state.cache
 YUM_CHECK_CACHE=$MK_VARDIR/cache/yum_check.cache
 
-# get curent yum state - use cache directory contents as fingerprint
+# get current yum state - use cache directory contents as fingerprint
 YUM_CURRENT="$(ls -lR /var/cache/yum/ || ls -lR /var/cache/dnf/)"
 
 # check if cached listing of /var/cache/yum already exists - create empty one otherwise
