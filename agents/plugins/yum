@@ -8,31 +8,31 @@ fi
 BOOT_REQUIRED=no
 UPDATES=0
 SECURITY_UPDATES=0
-YUM_STATE_CACHE=$MK_VARDIR/cache/yum_state.cache
-YUM_CHECK_CACHE=$MK_VARDIR/cache/yum_check.cache
+CACHE_RESULT_CHECK=$MK_VARDIR/cache/yum_result.cache
+CACHE_YUM_UPDATE=$MK_VARDIR/cache/yum_update.cache
 
 # get current yum state - use cache directory contents as fingerprint
 YUM_CURRENT="$(ls -lR /var/cache/yum/ || ls -lR /var/cache/dnf/)"
 
 # check if cached listing of /var/cache/yum already exists - create empty one otherwise
-if [ ! -e $YUM_CHECK_CACHE ]
+if [ ! -e $CACHE_YUM_UPDATE ]
 then
-    touch $YUM_CHECK_CACHE
-elif [ ! -f $YUM_CHECK_CACHE ] || [ -L $YUM_CHECK_CACHE ]
+    touch $CACHE_YUM_UPDATE
+elif [ ! -f $CACHE_YUM_UPDATE ] || [ -L $CACHE_YUM_UPDATE ]
 then
     # something is wrong here...
     echo "invalid cache file"
     exit 2
 else
     # get cached information
-    YUM_CACHED=$(cat "$YUM_CHECK_CACHE")
+    YUM_CACHED=$(cat "$CACHE_YUM_UPDATE")
 fi
 
 # check if cached check result already exists and is nothing but a file
-if [ ! -e $YUM_STATE_CACHE  ]
+if [ ! -e $CACHE_RESULT_CHECK  ]
 then
-    touch $YUM_STATE_CACHE
-elif [ ! -f $YUM_STATE_CACHE ] || [ -L $YUM_STATE_CACHE ]
+    touch $CACHE_RESULT_CHECK
+elif [ ! -f $CACHE_RESULT_CHECK ] || [ -L $CACHE_RESULT_CHECK ]
 then
     # something is wrong here...
     echo "invalid cache file"
@@ -46,15 +46,15 @@ RUNNING_SECS=$(cat /proc/uptime | cut -d" " -f1 | cut -d"." -f1)
 if (( RUNNING_SECS < 120 ))
 then
     # remove pre-reboot cache which requires reboot
-    rm -f $YUM_STATE_CACHE
+    rm -f $CACHE_RESULT_CHECK
     # create empty check cache
-    touch $YUM_STATE_CACHE
+    touch $CACHE_RESULT_CHECK
 fi
 
 echo "<<<yum>>>"
 
 # compare current and cached yum information
-if [ "$YUM_CURRENT" != "$YUM_CACHED)" ] && [ ! -s $YUM_STATE_CACHE ]
+if [ "$YUM_CURRENT" != "$YUM_CACHED)" ] && [ ! -s $CACHE_RESULT_CHECK ]
 then
     count=0
         while [ -n "$(pgrep -f "python /usr/bin/yum")" ]; do
@@ -91,8 +91,8 @@ then
     echo $SECURITY_UPDATES
     # cache check yum
     # check if cached check already exists and is nothing but a file
-    if [ -f $YUM_CHECK_CACHE ] || [ ! -L $YUM_CHECK_CACHE ]; then
-        echo "$YUM_CURRENT" > $YUM_CHECK_CACHE
+    if [ -f $CACHE_YUM_UPDATE ] || [ ! -L $CACHE_YUM_UPDATE ]; then
+        echo "$YUM_CURRENT" > $CACHE_YUM_UPDATE
     else
         # something is wrong here...
         echo "invalid check cache file"
@@ -100,11 +100,11 @@ then
     fi
     # cache check results
     # check if cached check result already exists and is nothing but a file
-    if [ -f $YUM_STATE_CACHE ] || [ ! -L $YUM_STATE_CACHE ]
+    if [ -f $CACHE_RESULT_CHECK ] || [ ! -L $CACHE_RESULT_CHECK ]
     then
-        echo $BOOT_REQUIRED > $YUM_STATE_CACHE
-        echo $UPDATES >> $YUM_STATE_CACHE
-        echo $SECURITY_UPDATES >> $YUM_STATE_CACHE
+        echo $BOOT_REQUIRED > $CACHE_RESULT_CHECK
+        echo $UPDATES >> $CACHE_RESULT_CHECK
+        echo $SECURITY_UPDATES >> $CACHE_RESULT_CHECK
     else
         # something is wrong here...
         echo "invalid check result cache file"
@@ -112,5 +112,5 @@ then
     fi
 else
     # use cache file
-    cat $YUM_STATE_CACHE
+    cat $CACHE_RESULT_CHECK
 fi
