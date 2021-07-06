@@ -25,7 +25,7 @@ then
     exit 2
 else
     # get cached information
-    YUM_CACHED=$(cat $YUM_CHECK_CACHE)
+    YUM_CACHED=$(cat "$YUM_CHECK_CACHE")
 fi
 
 # check if cached check result already exists and is nothing but a file
@@ -79,7 +79,7 @@ then
     waitmax 10 /usr/bin/yum -C --noplugins --quiet --security list updates > /dev/null 2>&1
     if [ $? -eq 0 ]
     then
-            SECURITY_UPDATES=$(waitmax 25 /usr/bin/yum -C --noplugins --quiet --security list updates | grep "\." | cut -d' ' -f1 | wc -l || echo "-1")
+        SECURITY_UPDATES=$(waitmax 25 /usr/bin/yum -C --noplugins --quiet --security list updates | grep "\." | cut -d' ' -f1 | wc -l || echo "-1")
     else
     # --security not supported with this yum version
     # maybe the yum-plugin-security package is needed (RH 6)
