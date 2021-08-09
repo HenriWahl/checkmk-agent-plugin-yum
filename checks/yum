@@ -5,7 +5,7 @@
 # Copyright 2015, Henri Wahl <h.wahl@ifw-dresden.de>
 # Copyright 2018, Moritz Schlarb <schlarbm@uni-mainz.de>
 # Copyright 2021, Marco Lenhardt <marco.lenhardt@ontec.at>
-#
+# Copyright 2021, Henrik Gießel <henrik.giessel@yahoo.de>
 # Based on:
 #
 # Check_MK APT-NG Plugin - Check for upgradeable packages.
@@ -33,12 +33,17 @@
 # yes
 # 32
 # 4
+# 1626252300
 
+from datetime import datetime
+from time import time
 
 factory_settings["yum_default_levels"] = {
     "reboot_req" : 2,
     "normal": 1,
     "security": 2,
+    "last_update_state": 0,
+    "last_update_time_diff": (60*24*60*60),
 }
 
 def inventory_yum(info):
@@ -71,6 +76,11 @@ def check_yum(_no_item, params, info):
         except:
             security_packages = -1
             
+        try:
+            last_update_timestamp = int(info[3][0])
+        except:
+            last_update_timestamp = -1
+
         if packages < 0:
             level = 3
             yield level, 'No package information available'
@@ -84,7 +94,25 @@ def check_yum(_no_item, params, info):
         if security_packages > 0:
             level = params["security"]
             yield level, "%d security updates available" % security_packages, [("security_updates", security_packages)]
+        
+        if last_update_timestamp < 0:
+            level = params["last_update_state"]
+            yield level, "%d Time of last update could not be found" % last_update_timestamp, [("last_update_timestamp", last_update_timestamp)]
+        
+        elif last_update_timestamp > 0:
+            level = params["last_update_state"]
+            last_update_timestamp_diff = params["last_update_time_diff"]
+            current_timestamp=int(time())
+
+            if current_timestamp - last_update_timestamp < last_update_timestamp_diff:
+                yield 0, "Last Update was run at %s"  % datetime.fromtimestamp(last_update_timestamp)
+
+            elif current_timestamp - last_update_timestamp > last_update_timestamp_diff and packages == 0:
+                yield 0, "Last Update was too long ago at %s but there are no pending updates"  % datetime.fromtimestamp(last_update_timestamp)
             
+            else:
+                yield level, "Last Update was too long ago at %s and there are pending updates" % datetime.fromtimestamp(last_update_timestamp)
+
 
     if (reboot_req == "yes"):
         # fallback for < 2.0.6

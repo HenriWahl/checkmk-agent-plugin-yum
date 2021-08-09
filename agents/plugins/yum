@@ -10,6 +10,8 @@ UPDATES=0
 SECURITY_UPDATES=0
 CACHE_RESULT_CHECK=$MK_VARDIR/cache/yum_result.cache
 CACHE_YUM_UPDATE=$MK_VARDIR/cache/yum_update.cache
+LAST_UPDATE_TIMESTAMP=-1
+
 
 # get current yum state - use cache directory contents as fingerprint
 YUM_CURRENT="$(ls -lR /var/cache/yum/ || ls -lR /var/cache/dnf/)"
@@ -86,9 +88,15 @@ then
             SECURITY_UPDATES="-2"
     fi
 
+    # Check last time of installed Updates from yum history
+    LAST_UPDATE_TIMESTAMP=$(/usr/bin/yum -C --quiet --noplugins history | awk '{if(NR>2)print}' | grep  ' U \|Upgrade' | cut -d '|' -f3  | head -n 1 | date -f - +"%s" || echo "-1")
+
+
     echo $BOOT_REQUIRED
     echo $UPDATES
     echo $SECURITY_UPDATES
+    echo $LAST_UPDATE_TIMESTAMP
+
     # cache check yum
     # check if cached check already exists and is nothing but a file
     if [ -f $CACHE_YUM_UPDATE ] || [ ! -L $CACHE_YUM_UPDATE ]; then
@@ -105,6 +113,7 @@ then
         echo $BOOT_REQUIRED > $CACHE_RESULT_CHECK
         echo $UPDATES >> $CACHE_RESULT_CHECK
         echo $SECURITY_UPDATES >> $CACHE_RESULT_CHECK
+        echo $LAST_UPDATE_TIMESTAMP >> $CACHE_RESULT_CHECK
     else
         # something is wrong here...
         echo "invalid check result cache file"
