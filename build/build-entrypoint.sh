@@ -28,6 +28,5 @@ su - cmk -c "/omd/sites/cmk/bin/check_mk -P create yum"
 # also to be done by site user is packaging the mkp file
 su - cmk -c "/omd/sites/cmk/bin/check_mk -P pack yum"
 
-cat $CMK/var/check_mk/packages/yum
-
-ls -l /omd/sites/cmk
+# copy created extension package back into volume
+cp /omd/sites/cmk/*.mkp /source

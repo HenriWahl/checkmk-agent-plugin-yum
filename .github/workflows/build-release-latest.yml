@@ -11,5 +11,10 @@ jobs:
       - uses: actions/checkout@v2
       # build container image for package creation
       - run: /usr/bin/docker build -t ${{ github.job }} -f build/Dockerfile .
+      # actually build .mkp file
       - run: /usr/bin/docker run --volume $PWD:/source ${{ github.job }}
-      - run: find / -name "*.mkp"
+      # upload results
+      - uses: actions/upload-artifact@v2
+        with:
+          path: ./*.mkp
+          retention-days: 1
