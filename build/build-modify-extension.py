@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
+#
+#  modify extension configuration
+#
 
 from pathlib import Path
 from pprint import pformat
-from sys import argv,\
+from sys import argv, \
     exit
 
 from git import (Commit,

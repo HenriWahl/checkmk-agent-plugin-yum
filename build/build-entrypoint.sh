@@ -3,7 +3,7 @@
 
 set -e
 
-SOURCE=/plugin-source
+SOURCE=/source
 CMK=/omd/sites/cmk
 
 cd $CMK/local
@@ -22,8 +22,8 @@ cp -R $SOURCE/web .
 # has to be done by site user
 su - cmk -c "/omd/sites/cmk/bin/check_mk -P create yum"
 
-# modify package config file with correct version number, author etc.
-/build-modify-package.py $SOURCE $CMK/var/check_mk/packages/yum
+# modify extension config file with correct version number, author etc.
+/build-modify-extension.py $SOURCE $CMK/var/check_mk/packages/yum
 
 # also to be done by site user is packaging the mkp file
 su - cmk -c "/omd/sites/cmk/bin/check_mk -P pack yum"
