@@ -4,9 +4,9 @@ on:
     tags-ignore: 'v*'
     branches: '*'
 
-  jobs:
-    build-package:
-      runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - run: ls -l
+jobs:
+  build-package:
+    runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v2
+    - run: ls -l
