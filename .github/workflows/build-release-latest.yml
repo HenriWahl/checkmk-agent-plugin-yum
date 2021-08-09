@@ -13,6 +13,7 @@ jobs:
       - run: /usr/bin/docker build -t ${{ github.job }} -f build/Dockerfile .
       # actually build .mkp file
       - run: /usr/bin/docker run --volume $PWD:/source ${{ github.job }}
+      - run: ls -l
       # upload results
       - uses: actions/upload-artifact@v2
         with:
