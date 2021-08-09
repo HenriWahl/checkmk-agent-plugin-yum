@@ -9,5 +9,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - run: ls -l
-      - run: pwd
+      # build container image for package creation
+      - run: /usr/bin/docker build -t ${{ github.job }} -f build/Dockerfile .
