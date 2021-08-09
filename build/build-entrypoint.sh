@@ -29,6 +29,6 @@ su - cmk -c "/omd/sites/cmk/bin/check_mk -P create yum"
 su - cmk -c "/omd/sites/cmk/bin/check_mk -P pack yum"
 
 # let runner read the .mkp file too
-chown +r /omd/sites/cmk/*.mkp
+chmod +r /omd/sites/cmk/*.mkp
 # copy created extension package back into volume
 cp /omd/sites/cmk/*.mkp /source
