@@ -1,0 +1,34 @@
+name: build-release-latest
+on:
+  push:
+    tags: 'v*'
+
+jobs:
+  build-package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      # build container image for package creation
+      - run: /usr/bin/docker build -t ${{ github.job }} -f build/Dockerfile .
+      # actually build .mkp file
+      - run: /usr/bin/docker run --volume $PWD:/source ${{ github.job }}
+      # upload results
+      - uses: actions/upload-artifact@v2
+        with:
+          path: ./*.mkp
+          retention-days: 1
+
+  github-release:
+    runs-on: ubuntu-latest
+    needs: build-package
+    steps:
+      - uses: actions/download-artifact@v2
+      - run: cd artifact && md5sum *.mkp > md5sums.txt
+      - run: cd artifact && sha256sum *.mkp > sha256sums.txt
+      - uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: true
+          files: |
+            artifact/*
