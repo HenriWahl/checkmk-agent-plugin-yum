@@ -1,4 +1,4 @@
-name: build-release-latest
+name: build-release-stable
 on:
   push:
     tags: 'v*'
