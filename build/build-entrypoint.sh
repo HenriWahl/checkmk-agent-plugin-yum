@@ -9,7 +9,7 @@ CMK=/omd/sites/cmk
 cd $CMK/local
 
 # copy lib
-cp -R $SOURCE/lib/check_mk/ ./lib/check_mk/
+cp -R $SOURCE/lib/* ./lib/
 
 cd share/check_mk
 # copy non-lib
