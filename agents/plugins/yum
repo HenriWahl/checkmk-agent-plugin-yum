@@ -56,7 +56,8 @@ fi
 echo "<<<yum>>>"
 
 # compare current and cached yum information
-if [ "$YUM_CURRENT" != "$YUM_CACHED)" ] && [ ! -s $CACHE_RESULT_CHECK ]
+# Update cached data if YUM fingerprint has changed OR machine has recently rebooted.
+if [ "$YUM_CURRENT" != "$YUM_CACHED" ] || [ ! -s $CACHE_RESULT_CHECK ]
 then
     count=0
         while [ -n "$(pgrep -f "python /usr/bin/yum")" ]; do
