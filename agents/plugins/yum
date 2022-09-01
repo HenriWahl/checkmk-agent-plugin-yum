@@ -78,7 +78,7 @@ echo "<<<yum>>>"
 if [ "$YUM_CURRENT" != "$YUM_CACHED" ] || [ ! -s $CACHE_RESULT_CHECK ]
 then
     count=0
-        while [ -n "$(pgrep -f "python /usr/bin/yum")" ]; do
+        while [ -n "$(pgrep -f "python (/usr|)/bin/(yum|dnf)")" ]; do
             if [ $count -eq 3 ]; then
                 echo "Tried to run yum for 30 secs but another yum instance was running"
                 exit 2
