@@ -10,11 +10,12 @@ UPDATES=0
 SECURITY_UPDATES=0
 CACHE_RESULT_CHECK=$MK_VARDIR/cache/yum_result.cache
 CACHE_YUM_UPDATE=$MK_VARDIR/cache/yum_update.cache
+CACHE_PREV_UPTIME=$MK_VARDIR/cache/yum_uptime.cache
 LAST_UPDATE_TIMESTAMP=-1
 
 
 # get current yum state - use cache directory contents as fingerprint
-YUM_CURRENT="$(ls -lR /var/cache/yum/ || ls -lR /var/cache/dnf/)"
+YUM_CURRENT="$(ls -lR /var/cache/{yum,dnf}/)"
 
 # check if cached listing of /var/cache/yum already exists - create empty one otherwise
 if [ ! -e $CACHE_YUM_UPDATE ]
@@ -44,8 +45,25 @@ fi
 # check if system has rebooted - if so, remove cached check file to avoid wrong "reboot required"-state
 RUNNING_SECS=$(cat /proc/uptime | cut -d" " -f1 | cut -d"." -f1)
 
-# assume 120 seconds for reboot being enough
-if (( RUNNING_SECS < 120 ))
+# check if cache file with previously seen uptime is existing - create one otherwise
+if [ ! -e $CACHE_PREV_UPTIME ]
+then
+    echo 0 > $CACHE_PREV_UPTIME
+    PREV_UPTIME=0
+elif [ ! -f $CACHE_PREV_UPTIME ] || [ -L $CACHE_PREV_UPTIME ]
+then
+    # something is wrong here...
+    echo "invalid cache file"
+    exit 2
+else
+    # get cached information
+    PREV_UPTIME=$(cat "$CACHE_PREV_UPTIME")
+    # save current uptime
+    echo $RUNNING_SECS > $CACHE_PREV_UPTIME
+fi
+
+# check if current uptime is lower than cached last seen uptime to detect reboot
+if (( RUNNING_SECS < PREV_UPTIME ))
 then
     # remove pre-reboot cache which requires reboot
     rm -f $CACHE_RESULT_CHECK
@@ -60,7 +78,7 @@ echo "<<<yum>>>"
 if [ "$YUM_CURRENT" != "$YUM_CACHED" ] || [ ! -s $CACHE_RESULT_CHECK ]
 then
     count=0
-        while [ -n "$(pgrep -f "python /usr/bin/yum")" ]; do
+        while [ -n "$(pgrep -f "python (/usr|)/bin/(yum|dnf)")" ]; do
             if [ $count -eq 3 ]; then
                 echo "Tried to run yum for 30 secs but another yum instance was running"
                 exit 2
