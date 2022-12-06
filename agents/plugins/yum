@@ -108,7 +108,7 @@ then
     fi
 
     # Check last time of installed Updates from yum history
-    LAST_UPDATE_TIMESTAMP=$(/usr/bin/yum -C --quiet --noplugins history | awk '{if(NR>2)print}' | grep  ' U \|Upgrade' | cut -d '|' -f3  | head -n 1 | date -f - +"%s" || echo "-1")
+    LAST_UPDATE_TIMESTAMP=$(/usr/bin/yum -C --quiet --noplugins history | awk '{if(NR>2)print}' | grep  ' U \|Upgrade\|Update' | cut -d '|' -f3  | head -n 1 | date -f - +"%s" || echo "-1")
 
 
     echo $BOOT_REQUIRED
