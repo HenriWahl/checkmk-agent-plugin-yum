@@ -59,9 +59,15 @@ def check_yum(_no_item, params, info):
     security_packages = -1
     perfdata     = []
     
+    # Handle error message on blocking process
+    # "Tried to run yum for 30 secs but another yum instance was running"
+    if len(info) == 1 \
+       and "Tried to run yum for 30 secs but another yum instance was running" == " ".join(info[0]):
+        yield 3, "Tried to run yum for 30 secs but another yum instance was running"
+
     # Parse the agent output
     if len(info) > 0:
-        reboot_req   = info[0][0]
+        reboot_req = info[0][0]
         if not reboot_req in ('yes', 'no'):
             reboot_req = ''
         
