@@ -15,7 +15,7 @@ LAST_UPDATE_TIMESTAMP=-1
 
 
 # get current yum state - use cache directory contents as fingerprint
-YUM_CURRENT="$(ls -lR /var/cache/{yum,dnf}/)"
+YUM_CURRENT="$(ls -lR /var/cache/{yum,dnf}/ 2>/dev/null)"
 
 # check if cached listing of /var/cache/yum already exists - create empty one otherwise
 if [ ! -e $CACHE_YUM_UPDATE ]
