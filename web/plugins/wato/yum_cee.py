@@ -17,22 +17,29 @@ try:
 
     def _valuespec_agent_config_yum():
         return Alternative(
-            title = _("Yum (Community Version) updates (Linux)"),
-            help = _("This will deploy the agent plugin <tt>yum</tt>. This will activate the "
-                     "check <tt>zypper</tt> on redHat based hosts and monitor pending normal and security updates."),
-            elements = [
+            title=_("Yum (Community Version) updates (Linux)"),
+            help=_(
+                "This will deploy the agent plugin <tt>yum</tt>. This will activate the "
+                "check <tt>zypper</tt> on redHat based hosts and monitor pending normal and security updates."
+            ),
+            elements=[
                 Dictionary(
-                    title = _("Deploy the Yum plugin"),
-                    elements = [
-                        ( "interval",
-                          Age(title = "Interval for checking for updates"),
+                    title=_("Deploy the Yum plugin"),
+                    elements=[
+                        ( 
+                            "interval",
+                            Age(title="Interval for checking for updates"),
                         ),
                     ],
-                    optional_keys = False,
+                    optional_keys=False,
                 ),
-                FixedValue(None, title = _("Do not deploy the Yum plugin"), totext = _("(disabled)")),
+                FixedValue(
+                    None, 
+                    title=_("Do not deploy the Yum plugin"), 
+                    totext=_("(disabled)")
+                ),
             ],
-            default_value = { "interval": 129600, },
+            default_value={"interval": 129600, },
         )
 
     rulespec_registry.register(
