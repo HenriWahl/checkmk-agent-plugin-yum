@@ -15,7 +15,6 @@ cd share/check_mk
 # copy non-lib
 cp -R $SOURCE/agents .
 cp -R $SOURCE/checkman .
-cp -R $SOURCE/checks .
 cp -R $SOURCE/web .
 
 # needed for package config file creation
