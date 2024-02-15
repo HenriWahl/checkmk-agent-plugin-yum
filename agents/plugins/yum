@@ -97,7 +97,8 @@ then
     fi
     UPDATES=$(waitmax 25 /usr/bin/yum -C --noplugins --quiet list updates | grep "\." | cut -d' ' -f1 | wc -l || echo "-1")
     # check if --security is available
-    waitmax 10 /usr/bin/yum -C --noplugins --quiet --security list updates > /dev/null 2>&1
+    # Updated the timeout for the initial security list validation because it takes longer than 10 seconds on many machines
+    waitmax 25 /usr/bin/yum -C --noplugins --quiet --security list updates > /dev/null 2>&1
     if [ $? -eq 0 ]
     then
         SECURITY_UPDATES=$(waitmax 25 /usr/bin/yum -C --noplugins --quiet --security list updates | grep "\." | cut -d' ' -f1 | wc -l || echo "-1")
