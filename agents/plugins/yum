@@ -109,7 +109,10 @@ then
     fi
 
     # Check last time of installed Updates from yum history
-    LAST_UPDATE_TIMESTAMP=$(/usr/bin/yum -C --quiet --noplugins history | awk '{if(NR>2)print}' | grep  ' U \|Upgrade\|Update' | cut -d '|' -f3  | head -n 1 | date -f - +"%s" || echo "-1")
+	# Added "list all" to the history command as in situations where 20 or more RPM installs have been completed (non updates
+	# yum commands) have been run, the script will incorrectly report that the server has never updated
+	# Yum only lists 20 of the last actions when using only the "history" command.
+    LAST_UPDATE_TIMESTAMP=$(/usr/bin/yum -C --quiet --noplugins history list all | awk '{if(NR>2)print}' | grep  ' U \|Upgrade\|Update' | cut -d '|' -f3  | head -n 1 | date -f - +"%s" || echo "-1")
 
 
     echo $BOOT_REQUIRED
