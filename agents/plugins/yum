@@ -13,6 +13,8 @@ CACHE_YUM_UPDATE=$MK_VARDIR/cache/yum_update.cache
 CACHE_PREV_UPTIME=$MK_VARDIR/cache/yum_uptime.cache
 LAST_UPDATE_TIMESTAMP=-1
 
+# Check which major version we are running so we can run appropriate commands
+MAJOR_VERSION=$(grep -oP '(?<=^VERSION_ID=").*(?=")' /etc/os-release | cut -d '.' -f 1)
 
 # get current yum state - use cache directory contents as fingerprint
 YUM_CURRENT="$(ls -lR /var/cache/{yum,dnf}/ 2>/dev/null)"
@@ -109,8 +111,17 @@ then
     fi
 
     # Check last time of installed Updates from yum history
-    LAST_UPDATE_TIMESTAMP=$(/usr/bin/yum -C --quiet --noplugins history | awk '{if(NR>2)print}' | grep  ' U \|Upgrade\|Update' | cut -d '|' -f3  | head -n 1 | date -f - +"%s" || echo "-1")
-
+	# Added "list all" to the history command as in situations where 20 or more RPM installs have been completed (non updates
+	# yum commands) have been run, the script will incorrectly report that the server has never updated
+	# Yum only lists 20 of the last actions when using only the "history" command.
+    
+    # Switch command based on which Major version we are running
+    if [ "MAJOR_VERSION" -ge 8]; then
+	
+	    LAST_UPDATE_TIMESTAMP=$(/usr/bin/yum -C --quiet --noplugins history list | awk '{if(NR>2)print}' | grep  ' U \|Upgrade\|Update' | cut -d '|' -f3  | head -n 1 | date -f - +"%s" || echo "-1")
+    else
+	    LAST_UPDATE_TIMESTAMP=$(/usr/bin/yum -C --quiet --noplugins history list all| awk '{if(NR>2)print}' | grep  ' U \|Upgrade\|Update' | cut -d '|' -f3  | head -n 1 | date -f - +"%s" || echo "-1")
+	fi
 
     echo $BOOT_REQUIRED
     echo $UPDATES
