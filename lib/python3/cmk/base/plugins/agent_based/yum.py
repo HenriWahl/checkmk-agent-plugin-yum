@@ -106,18 +106,51 @@ def check_yum(params: Dict[str, int], section: Section):
     if section.error_message:
         yield Result(state=State.UNKNOWN, summary=section.error_message)
         return
-
+    # Check the status returned from the agent script
+	# Added additional checks to cover off a broader range of possibilities and 
+	# ensure that a value is returned (for the perf-o-meter) even when no updates are available
+	# First check if there was an error returned (-1) where the yum command failed
     if section.packages < 0:
         yield Result(state=State.UNKNOWN, summary='No package information available')
+	# Then check if there are "no updates of which none are security updates" but DO return a metric value
+	# of zero instead of not having a metric value at all
     elif section.packages == 0 and section.security_packages == 0:
         yield Result(state=State.OK, summary='All packages are up to date')
+        yield Metric(name="normal_updates", value=section.packages)
+	# If there are "any" updates available, report the number of updates
     elif section.packages > 0:
         yield Result(state=State(params.get("normal", 0)), summary=f"{section.packages} updates available")
         yield Metric(name="normal_updates", value=section.packages)
+    # If there are no updates available, but we haven't been able to check security updates, still return
+	# a metric value of zero
+	elif section.packages == 0:
+        yield Result(state=State.OK, summary=f"{section.packages} updates available")
+        yield Metric(name="normal_updates", value=section.packages)
 
-    if section.security_packages > 0:
+
+    # Check the status of the returned number of updates that are security updates including
+	# error condition and if there are no updates or the security updates check is not possible
+    # First check if ANY updates were flagged as security updates and report the metric
+	if section.security_packages >= 0:
         yield Result(state=State(params.get("security", 0)), summary=f"{section.security_packages} security updates available")
         yield Metric(name="security_updates", value=section.security_packages)
+    # If there are no updates available, report this
+	elif section.security_packages == 0:
+        yield Result(state=State.OK, summary=f"{section.security_packages} security updates available")
+        yield Metric(name="security_updates", value=section.security_packages)
+    #If the agent reported that security update was not available, return this with a report of 0 updates
+	elif section.security_packages == -2:
+        yield Result(state=State.OK, summary='Security update check not available')
+        yield Metric(name="security_updates", value=0)
+	# If the security update check failed with an error, report this AND a value of zero
+    elif section.security_packages == -1:
+        yield Metric(name="security_updates", value=0)
+        yield Result(state=State.OK, summary='Security update failed')
+
+
+
+
+
 
     if section.last_update_timestamp < 0:
         yield Result(
