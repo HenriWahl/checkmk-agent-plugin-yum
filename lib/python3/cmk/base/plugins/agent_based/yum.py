@@ -123,7 +123,7 @@ def check_yum(params: Dict[str, int], section: Section):
         yield Metric(name="normal_updates", value=section.packages)
     # If there are no updates available, but we haven't been able to check security updates, still return
 	# a metric value of zero
-	elif section.packages == 0:
+    elif section.packages == 0:
         yield Result(state=State.OK, summary=f"{section.packages} updates available")
         yield Metric(name="normal_updates", value=section.packages)
 
@@ -131,15 +131,15 @@ def check_yum(params: Dict[str, int], section: Section):
     # Check the status of the returned number of updates that are security updates including
 	# error condition and if there are no updates or the security updates check is not possible
     # First check if ANY updates were flagged as security updates and report the metric
-	if section.security_packages >= 0:
+    if section.security_packages >= 0:
         yield Result(state=State(params.get("security", 0)), summary=f"{section.security_packages} security updates available")
         yield Metric(name="security_updates", value=section.security_packages)
     # If there are no updates available, report this
-	elif section.security_packages == 0:
+    elif section.security_packages == 0:
         yield Result(state=State.OK, summary=f"{section.security_packages} security updates available")
         yield Metric(name="security_updates", value=section.security_packages)
     #If the agent reported that security update was not available, return this with a report of 0 updates
-	elif section.security_packages == -2:
+    elif section.security_packages == -2:
         yield Result(state=State.OK, summary='Security update check not available')
         yield Metric(name="security_updates", value=0)
 	# If the security update check failed with an error, report this AND a value of zero
