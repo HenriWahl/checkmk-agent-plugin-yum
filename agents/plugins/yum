@@ -116,7 +116,7 @@ then
 	# Yum only lists 20 of the last actions when using only the "history" command.
     
     # Switch command based on which Major version we are running
-    if [ "MAJOR_VERSION" -ge 8]; then
+    if [ "$MAJOR_VERSION" -ge 8 ]; then
 	
 	    LAST_UPDATE_TIMESTAMP=$(/usr/bin/yum -C --quiet --noplugins history list | awk '{if(NR>2)print}' | grep  ' U \|Upgrade\|Update' | cut -d '|' -f3  | head -n 1 | date -f - +"%s" || echo "-1")
     else
