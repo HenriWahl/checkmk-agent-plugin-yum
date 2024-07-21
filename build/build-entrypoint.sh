@@ -35,4 +35,7 @@ chmod go+rw $CMK/local/lib/python3/cmk/base/cee/plugins/bakery
 su - cmk -c "/omd/sites/cmk/bin/mkp package $CMK/tmp/check_mk/yum.manifest.temp"
 
 # copy created extension package back into volume
-cp $CMK/var/check_mk/packages_local/*.mkp /source
+cp $CMK/var/check_mk/packages_local/*.mkp $SOURCE
+
+# let runner user access the created mkp file which is owned by root now
+chmod go+r $SOURCE/*.mkp
