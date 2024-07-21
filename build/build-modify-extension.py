@@ -20,16 +20,15 @@ if len(argv) > 2:
         # get version information from git repo
         repo = Repo(path=git_repo_path, search_parent_directories=True)
 
-        print(repo.tags)
-        print(repo.head)
+        print(repo.head.commit)
 
         # if no tag is latest take repo head
         version_repo = next((tag for tag in repo.tags if tag.commit == repo.head.commit), repo.head.commit)
         if type(version_repo) == Commit:
-            # first 8 characters of commit
-            version = version_repo.hexsha[0:8]
+            # first 8 characters of commit added to '0.0.' to get a SemVer version number
+            version = f'0.0.{version_repo.hexsha[0:8]}'
         elif type(version_repo) == TagReference:
-            # Tagl
+            # Tag
             version = version_repo.name
             if version.startswith('v'):
                 version = version.split('v')[1]

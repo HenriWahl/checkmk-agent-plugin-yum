@@ -21,6 +21,9 @@ cp -R $SOURCE/web .
 # has to be done by site user
 su - cmk -c "/omd/sites/cmk/bin/mkp template yum"
 
+ls -l $SOURCE
+git config --global --add safe.directory $SOURCE
+
 # modify extension config file with correct version number, author etc.
 #/build-modify-extension.py $SOURCE $CMK/var/check_mk/packages/yum
 /build-modify-extension.py $SOURCE $CMK/tmp/check_mk/yum.manifest.temp
