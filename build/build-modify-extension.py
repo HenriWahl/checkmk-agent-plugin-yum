@@ -26,7 +26,7 @@ if len(argv) > 2:
         version_repo = next((tag for tag in repo.tags if tag.commit == repo.head.commit), repo.head.commit)
         if type(version_repo) == Commit:
             # first 8 characters of commit added to '0.0.' to get a SemVer version number
-            version = f'0.0.{version_repo.hexsha[0:8]}'
+            version = f'0.0.{int(version_repo.hexsha[0:8], 16)}'
         elif type(version_repo) == TagReference:
             # Tag
             version = version_repo.name
