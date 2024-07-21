@@ -149,14 +149,10 @@ def check_yum(params: Dict[str, int], section: Section):
         yield Result(state=State.OK, summary=f"{section.packages} updates available")
         yield Metric(name="normal_updates", value=section.packages)
 
-
-    # Check the status of the returned number of updates that are
-    # security updates including error condition and if there are no
-    # updates or the security updates check is not possible
-
-    # First check if ANY updates were flagged as security updates
-    # and report the metric
-    if section.security_packages >= 0:
+    # Check the status of the returned number of updates that are security updates including
+	  # error condition and if there are no updates or the security updates check is not possible
+    # First check if ANY updates were flagged as security updates and report the metric
+    if section.security_packages > 0:
         yield Result(state=State(params.get("security", 0)), summary=f"{section.security_packages} security updates available")
         yield Metric(name="security_updates", value=section.security_packages)
     # If there are no updates available, report this
