@@ -111,17 +111,24 @@ then
     fi
 
     # Check last time of installed Updates from yum history
-	# Added "list all" to the history command as in situations where 20 or more RPM installs have been completed (non updates
-	# yum commands) have been run, the script will incorrectly report that the server has never updated
-	# Yum only lists 20 of the last actions when using only the "history" command.
+    # Added "list all" to the history command as in situations where 20 or more RPM installs have been completed (non updates
+    # yum commands) have been run, the script will incorrectly report that the server has never updated
+    # Yum only lists 20 of the last actions when using only the "history" command.
     
     # Switch command based on which Major version we are running
     if [ "$MAJOR_VERSION" -ge 8 ]; then
-	
-	    LAST_UPDATE_TIMESTAMP=$(/usr/bin/yum -C --quiet --noplugins history list | awk '{if(NR>2)print}' | grep  ' U \|Upgrade\|Update' | cut -d '|' -f3  | head -n 1 | date -f - +"%s" || echo "-1")
+
+        LAST_UPDATE_TIMESTAMP=$(/usr/bin/yum -C --quiet --noplugins history list | awk '{if(NR>2)print}' | grep  ' U \|Upgrade\|Update' | cut -d '|' -f3  | head -n 1 | date -f - +"%s" || echo "-1")
     else
-	    LAST_UPDATE_TIMESTAMP=$(/usr/bin/yum -C --quiet --noplugins history list all| awk '{if(NR>2)print}' | grep  ' U \|Upgrade\|Update' | cut -d '|' -f3  | head -n 1 | date -f - +"%s" || echo "-1")
-	fi
+        LAST_UPDATE_TIMESTAMP=$(/usr/bin/yum -C --quiet --noplugins history list all| awk '{if(NR>2)print}' | grep  ' U \|Upgrade\|Update' | cut -d '|' -f3  | head -n 1 | date -f - +"%s" || echo "-1")
+    fi
+    # Add check in case this is a brand new built machine that has had
+    # up to date pacakges installed during build. In this case, neither
+    # command above will have yielded a value and LAST_UPDATE_TIMESTAMP
+    # will be empty
+    
+    if [ "$LAST_UPDATE_TIMESTAMP" == "" ]; then LAST_UPDATE_TIMESTAMP=-1; fi
+
 
     echo $BOOT_REQUIRED
     echo $UPDATES
