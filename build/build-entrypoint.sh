@@ -19,13 +19,14 @@ cp -R $SOURCE/web .
 
 # needed for package config file creation
 # has to be done by site user
-su - cmk -c "/omd/sites/cmk/bin/check_mk -P create yum"
+su - cmk -c "/omd/sites/cmk/bin/mkp template yum"
 
 # modify extension config file with correct version number, author etc.
-/build-modify-extension.py $SOURCE $CMK/var/check_mk/packages/yum
+#/build-modify-extension.py $SOURCE $CMK/var/check_mk/packages/yum
+/build-modify-extension.py $SOURCE $CMK/tmp/check_mk/yum.manifest.temp
 
 # also to be done by site user is packaging the mkp file
-su - cmk -c "/omd/sites/cmk/bin/check_mk -P pack yum"
+su - cmk -c "/omd/sites/cmk/bin/mkp package $CMK/tmp/check_mk/yum.manifest.temp"
 
 # let runner read the .mkp file too
 chmod +r /omd/sites/cmk/*.mkp
