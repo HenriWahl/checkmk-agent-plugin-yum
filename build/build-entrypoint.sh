@@ -21,17 +21,18 @@ cp -R $SOURCE/web .
 # has to be done by site user
 su - cmk -c "/omd/sites/cmk/bin/mkp template yum"
 
-ls -l $SOURCE
+# otherwise /source is not accepted
 git config --global --add safe.directory $SOURCE
 
 # modify extension config file with correct version number, author etc.
-#/build-modify-extension.py $SOURCE $CMK/var/check_mk/packages/yum
 /build-modify-extension.py $SOURCE $CMK/tmp/check_mk/yum.manifest.temp
+
+# avoid error:
+# Error removing file /omd/sites/cmk/local/lib/python3/cmk/base/cee/plugins/bakery/yum.py: [Errno 13] Permission denied: '/omd/sites/cmk/local/lib/python3/cmk/base/cee/plugins/bakery/yum.py'
+chmod go+rw $CMK/local/lib/python3/cmk/base/cee/plugins/bakery
 
 # also to be done by site user is packaging the mkp file
 su - cmk -c "/omd/sites/cmk/bin/mkp package $CMK/tmp/check_mk/yum.manifest.temp"
 
-# let runner read the .mkp file too
-chmod +r /omd/sites/cmk/*.mkp
 # copy created extension package back into volume
-cp /omd/sites/cmk/*.mkp /source
+cp $CMK/var/check_mk/packages_local/*.mkp /source
