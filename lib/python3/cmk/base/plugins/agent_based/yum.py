@@ -225,11 +225,11 @@ def check_yum(params: Dict[str, int], section: Section):
         yield Result(state=State(level),  summary="reboot required")
 
 
-    #### Use the API v1 "register" namspace to assign the various
-    #### processing sections of this python file to handle that various
-    #### data,
-    # set default parameters and the general details of the service.
-    register.check_plugin(
+#### Use the API v1 "register" namspace to assign the various
+#### processing sections of this python file to handle that various
+#### data,
+# set default parameters and the general details of the service.
+register.check_plugin(
     # Set the unique name of the plugin
     name='yum',
     # Set the service name that is created on a host 
