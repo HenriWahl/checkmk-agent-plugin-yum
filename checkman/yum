@@ -1,6 +1,7 @@
 title: Check for updates via yum
 agents: linux
 author: Henri Wahl <h.wahl@ifw-dresden.de>, based on work of Karsten Scgoeke <karsten.schoeke@geobasis-bb.de>, Stefan Schlesinger <sts@ono.at>
+catalog: generic
 license: GPL
 distribution: check_mk
 description:
