@@ -14,7 +14,11 @@ CACHE_PREV_UPTIME=$MK_VARDIR/cache/yum_uptime.cache
 LAST_UPDATE_TIMESTAMP=-1
 
 # Check which major version we are running so we can run appropriate commands
-MAJOR_VERSION=$(grep -oP '(?<=^VERSION_ID=").*(?=")' /etc/os-release | cut -d '.' -f 1)
+if [ -f "/etc/os-release" ]; then
+  MAJOR_VERSION=$(grep -oP '(?<=^VERSION_ID=").*(?=")' /etc/os-release | cut -d '.' -f 1)
+else
+  MAJOR_VERSION=0
+fi
 
 # get current yum state - use cache directory contents as fingerprint
 YUM_CURRENT="$(ls -lR /var/cache/{yum,dnf}/ 2>/dev/null)"
