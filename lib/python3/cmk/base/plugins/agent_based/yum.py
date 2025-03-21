@@ -44,17 +44,24 @@ from typing import Dict, List, NamedTuple, Optional
 
 # Import CheckMK specific libraries
 from cmk.gui.i18n import _
-from cmk.base.plugins.agent_based.agent_based_api.v1.type_defs import (
-    StringTable,
-)
-from cmk.base.plugins.agent_based.agent_based_api.v1 import (
-    register,
-    Result,
+#from cmk.agent_based.v2.type_defs import (
+#    StringTable,
+#)
+from cmk.agent_based.v2 import (
+ #   register,
+    CheckResult,
+        CheckPlugin,
     Service,
     State,
     Metric,
     render,
+        AgentSection,
+        Result,
 )
+
+
+
+
 
 # Set some default values for the plugin
 class Section(NamedTuple):
@@ -65,17 +72,17 @@ class Section(NamedTuple):
     error_message: Optional[str] = None
 
 #### Define the section that processes the output received from the
-#### agent within the 
+#### agent within the
 # <<<yum>>> section. This is called because we register the "yum"
 # agent section using the API "register" namespace
 def yum_parse(string_table: List[List[str]]) -> Section:
     # If no results are determined to have been parsed from the agent
-	# <<<yum>>> section, flag it
+        # <<<yum>>> section, flag it
     if string_table[0][0] == 'ERROR:':
         return Section(error_message=" ".join(string_table[0][1:]))
 
     # Assess the validity of the "reboot_required" section - default to
-	# "None" if there is an error
+        # "None" if there is an error
     reboot_required = None
     try:
         if string_table[0][0] in ('yes', 'no'):
@@ -101,12 +108,12 @@ def yum_parse(string_table: List[List[str]]) -> Section:
         last_update_timestamp)
 
 #### Register the agent section we want to be referring to
-register.agent_section(
+agent_section_yum=AgentSection(
     # Using the apiv1 "register" namespace we register the "yum" agent
     # section and it's subsequent processing within this python script
     # by defining the "parse_funtcion" as "yum_parse"
-    name='yum',
-    parse_function=yum_parse
+    name="yum",
+    parse_function=yum_parse,
 )
 
 #### Define what we do when discovery is run
@@ -150,7 +157,7 @@ def check_yum(params: Dict[str, int], section: Section):
         yield Metric(name="normal_updates", value=section.packages)
 
     # Check the status of the returned number of updates that are security updates including
-	  # error condition and if there are no updates or the security updates check is not possible
+          # error condition and if there are no updates or the security updates check is not possible
     # First check if ANY updates were flagged as security updates and report the metric
     if section.security_packages > 0:
         yield Result(state=State(params.get("security", 0)), summary=f"{section.security_packages} security updates available")
@@ -170,7 +177,7 @@ def check_yum(params: Dict[str, int], section: Section):
         yield Metric(name="security_updates", value=0)
         yield Result(state=State.OK, summary='Security update failed')
 
-        
+
     #### Interpret the timestamp that is returned for when the host was
     #### last updated
     # If the timestamp is less than zero, report that there is no
@@ -211,7 +218,7 @@ def check_yum(params: Dict[str, int], section: Section):
             yield Result(
                 state=State(level),
                 summary=f"Last Update was too long ago at {render.datetime(section.last_update_timestamp)} and there are pending updates")
-    
+
     #### Assess the "reboot_required" parameters
     if section.reboot_required:
         # fallback for < 2.0.6
@@ -229,10 +236,10 @@ def check_yum(params: Dict[str, int], section: Section):
 #### processing sections of this python file to handle that various
 #### data,
 # set default parameters and the general details of the service.
-register.check_plugin(
+check_plugin_yum=CheckPlugin(
     # Set the unique name of the plugin
     name='yum',
-    # Set the service name that is created on a host 
+    # Set the service name that is created on a host
     service_name=_('YUM Updates'),
     # Set what should be called when discovery is run - in this case,
     # call "discovery_yum" that simply creates a new service
