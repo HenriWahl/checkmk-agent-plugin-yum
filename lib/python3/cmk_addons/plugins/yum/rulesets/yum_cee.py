@@ -3,7 +3,7 @@
 
 try:
     from cmk.gui.i18n import _
-    from cmk.gui.plugins.wato import (
+    from cmk.gui.plugins.wato.utils import (
         HostRulespec,
         rulespec_registry,
     )
