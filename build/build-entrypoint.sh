@@ -11,7 +11,7 @@ cd $CMK/local
 # copy lib
 cp -R $SOURCE/lib/* ./lib/
 
-cd /share/check_mk
+cd share/check_mk
 # copy non-lib
 cp -R $SOURCE/agents .
 # No longer needed as all in lib
