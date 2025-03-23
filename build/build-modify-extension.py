@@ -56,17 +56,17 @@ if len(argv) > 2:
         print(f'Package configuration file path {package_file_path} does not exist. :-(')
         exit(1)
 
-# New code to update version number inside the yum script itself
-yum_agent_path = "/omd/sites/cmk/local/share/check_mk/agents/plugins/yum"
-if os.path.exists(yum_agent_path):
-    with open(yum_agent_path, "r+") as file:
-        content = file.read().replace('CMK_VERSION="0.0.0"', f'CMK_VERSION="{version}"')
-        file.seek(0)
-        file.write(content)
-        file.truncate()
-else:
-    print(f"File not found: {yum_agent_path}")
-# End of new code
+    # New code to update version number inside the yum script itself
+    yum_agent_path = "/omd/sites/cmk/local/share/check_mk/agents/plugins/yum"
+    if os.path.exists(yum_agent_path):
+        with open(yum_agent_path, "r+") as file:
+            content = file.read().replace('CMK_VERSION="0.0.0"', f'CMK_VERSION="{version}"')
+            file.seek(0)
+            file.write(content)
+            file.truncate()
+    else:
+        print(f"File not found: {yum_agent_path}")
+    # End of new code
 
 else:
     print('Git repository or package configuration file path is missing at all. :-(')
