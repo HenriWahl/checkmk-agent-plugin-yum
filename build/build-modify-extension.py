@@ -13,7 +13,7 @@ from sys import argv, \
 from git import (Commit,
                  Repo,
                  TagReference)
-version=0.0.0
+version="0.0.0"
 # only do stuff if git repo path and config file path are given
 if len(argv) > 2:
     git_repo_path = argv[1]
