@@ -11,11 +11,12 @@ cd $CMK/local
 # copy lib
 cp -R $SOURCE/lib/* ./lib/
 
-cd share/check_mk
+cd /share/check_mk
 # copy non-lib
 cp -R $SOURCE/agents .
-cp -R $SOURCE/checkman .
-cp -R $SOURCE/web .
+# No longer needed as all in lib
+# cp -R $SOURCE/checkman .
+# cp -R $SOURCE/web .
 
 # needed for package config file creation
 # has to be done by site user
