@@ -1,4 +1,4 @@
-FROM checkmk/check-mk-raw:2.2.0-latest
+FROM checkmk/check-mk-raw:2.3.0-latest
 LABEL maintainer=henri@nagstamon.de
 
 ARG DEBIAN_FRONTEND=noninteractive
