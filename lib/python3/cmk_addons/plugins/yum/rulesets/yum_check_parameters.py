@@ -13,7 +13,7 @@ from cmk.gui.valuespec import (
     Age,
 )
 
-from cmk.gui.plugins.wato import (
+from cmk.gui.plugins.wato.utils import (
     rulespec_registry,
     CheckParameterRulespecWithoutItem,
     RulespecGroupCheckParametersOperatingSystem,

@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 #
 #  modify extension configuration
-#
+
+# Include "os" to check for correct copy of the yum agent before changing lines in it below
+import os
 
 from pathlib import Path
 from pprint import pformat
@@ -11,7 +13,7 @@ from sys import argv, \
 from git import (Commit,
                  Repo,
                  TagReference)
-
+version="0.0.0"
 # only do stuff if git repo path and config file path are given
 if len(argv) > 2:
     git_repo_path = argv[1]
@@ -53,6 +55,19 @@ if len(argv) > 2:
     else:
         print(f'Package configuration file path {package_file_path} does not exist. :-(')
         exit(1)
+
+    # New code to update version number inside the yum script itself
+    yum_agent_path = "/omd/sites/cmk/local/share/check_mk/agents/plugins/yum"
+    if os.path.exists(yum_agent_path):
+        with open(yum_agent_path, "r+") as file:
+            content = file.read().replace('CMK_VERSION="0.0.0"', f'CMK_VERSION="{version}"')
+            file.seek(0)
+            file.write(content)
+            file.truncate()
+    else:
+        print(f"File not found: {yum_agent_path}")
+    # End of new code
+
 else:
     print('Git repository or package configuration file path is missing at all. :-(')
     exit(1)

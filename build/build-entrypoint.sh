@@ -14,8 +14,9 @@ cp -R $SOURCE/lib/* ./lib/
 cd share/check_mk
 # copy non-lib
 cp -R $SOURCE/agents .
-cp -R $SOURCE/checkman .
-cp -R $SOURCE/web .
+# No longer needed as all in lib
+# cp -R $SOURCE/checkman .
+# cp -R $SOURCE/web .
 
 # needed for package config file creation
 # has to be done by site user
@@ -30,6 +31,9 @@ git config --global --add safe.directory $SOURCE
 # avoid error:
 # Error removing file /omd/sites/cmk/local/lib/python3/cmk/base/cee/plugins/bakery/yum.py: [Errno 13] Permission denied: '/omd/sites/cmk/local/lib/python3/cmk/base/cee/plugins/bakery/yum.py'
 chmod go+rw $CMK/local/lib/python3/cmk/base/cee/plugins/bakery
+chmod go+rw $CMK/local/lib/python3/cmk_addons/plugins/yum/agent_based
+chmod go+rw $CMK/local/lib/python3/cmk_addons/plugins/yum/checkman
+chmod go+rw $CMK/local/lib/python3/cmk_addons/plugins/yum/rulesets
 
 # also to be done by site user is packaging the mkp file
 su - cmk -c "/omd/sites/cmk/bin/mkp package $CMK/tmp/check_mk/yum.manifest.temp"
