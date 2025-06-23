@@ -1,71 +1,71 @@
 #!/usr/bin/env python3
-# -*- encoding: utf-8; py-indent-offset: 4 -*-
-#
-# 2021 Henrik Gießel <henrik.giessel@yahoo.de>
-# 2018 Moritz Schlarb <schlarbm@uni-mainz.de>
-# 2015 Henri Wahl <h.wahl@ifw-dresden.de>
-# 2013 Karsten Schoeke karsten.schoeke@geobasis-bb.de
+"""Checkmk 2.4 rule specification for YUM Update Check"""
 
-from cmk.gui.i18n import _
-from cmk.gui.valuespec import (
+from cmk.rulesets.v1 import Title
+from cmk.rulesets.v1.form_specs import (
+    DefaultValue,
+    DictElement,
     Dictionary,
-    MonitoringState,
-    Age,
+    Integer,
+    LevelDirection,
+    SimpleLevels,
+    ServiceState,
 )
-
-from cmk.gui.plugins.wato.utils import (
-    rulespec_registry,
-    CheckParameterRulespecWithoutItem,
-    RulespecGroupCheckParametersOperatingSystem,
-)
+from cmk.rulesets.v1.rule_specs import CheckParameters, Topic, HostCondition
 
 
-def _parameter_valuespec_yum():
+def _parameter_form_yum():
     return Dictionary(
-        elements=[
-            (
-                "reboot_req",
-                MonitoringState(
-                    title=_("State when a reboot is required"),
-                    default_value=2,
-                )
+        title=Title("YUM Update Check"),
+        elements={
+            "reboot_req": DictElement(
+                parameter_form=ServiceState(
+                    title=Title("State when a reboot is required"),
+                    prefill=DefaultValue(ServiceState.CRIT),
+                ),
+                required=False,
             ),
-            (
-                "normal",
-                MonitoringState(
-                    title=_("State when normal updates are available"),
-                    default_value=1,
-                )
+            "normal": DictElement(
+                parameter_form=SimpleLevels(
+                    title=Title("State when normal updates are available"),
+                    form_spec_template=Integer(),
+                    level_direction=LevelDirection.UPPER,
+                    prefill_fixed_levels=DefaultValue(value=(1, 1)),
+                ),
+                required=False,
             ),
-            (
-                "security",
-                MonitoringState(
-                    title=_("State when security updates are available"),
-                    default_value=2,
-                )
+            "security": DictElement(
+                parameter_form=SimpleLevels(
+                    title=Title("State when security updates are available"),
+                    form_spec_template=Integer(),
+                    level_direction=LevelDirection.UPPER,
+                    prefill_fixed_levels=DefaultValue(value=(2, 2)),
+                ),
+                required=False,
             ),
-            (
-                "last_update_time_diff",
-                Age(
-                    title=_("Max Time since last last run update (Default 60 Days)"),
-                    default_value=(60*24*60*60),
-                )
+            "last_update_time_diff": DictElement(
+                parameter_form=Integer(
+                    title=Title("Max Time since last run update (Default 60 days)"),
+                    unit_symbol="days",
+                    prefill=DefaultValue(60),
+                ),
+                required=False
             ),
-            (
-                "last_update_state",
-                MonitoringState(
-                    title=_("Change State based on last run update (default OK)"),
-                    default_value=0,
-                )
+            "last_update_state": DictElement(
+                parameter_form=ServiceState(
+                    title=Title("Change State based on last run update (default OK)"),
+                    prefill=DefaultValue(ServiceState.OK),
+                ),
+                required=False,
             ),
-        ],
+        }
     )
 
 
-rulespec_registry.register(
-    CheckParameterRulespecWithoutItem(
-        check_group_name="yum",
-        group=RulespecGroupCheckParametersOperatingSystem,
-        parameter_valuespec=_parameter_valuespec_yum,
-        title=lambda: _("YUM Update check"),
-    ))
+rule_spec_yum = CheckParameters(
+    name="yum",
+    title=Title("YUM / DNF Update Check Parameters"),
+    topic=Topic.OPERATING_SYSTEM,
+    parameter_form=_parameter_form_yum,
+    condition=HostCondition(),
+)
