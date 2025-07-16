@@ -1,6 +1,8 @@
 #!/bin/bash
+# Set the version to be captured in newer versions of CheckMK Inventory
+CMK_VERSION="0.0.0"
 
-if [ -z $MK_VARDIR ]; then
+if [ -z "$MK_VARDIR" ]; then
     echo "ERROR: Unable to load ENV variables"
     exit 2
 fi
@@ -55,10 +57,10 @@ fi
 YUM_CURRENT="$(ls -lR /var/cache/{yum,dnf}/ 2>/dev/null)"
 
 # check if cached listing of /var/cache/yum already exists - create empty one otherwise
-if [ ! -e $CACHE_YUM_UPDATE ]
+if [ ! -e "$CACHE_YUM_UPDATE" ]
 then
-    touch $CACHE_YUM_UPDATE
-elif [ ! -f $CACHE_YUM_UPDATE ] || [ -L $CACHE_YUM_UPDATE ]
+    touch "$CACHE_YUM_UPDATE"
+elif [ ! -f "$CACHE_YUM_UPDATE" ] || [ -L "$CACHE_YUM_UPDATE" ]
 then
     # something is wrong here...
     echo "ERROR: invalid cache file"
@@ -69,10 +71,10 @@ else
 fi
 
 # check if cached check result already exists and is nothing but a file
-if [ ! -e $CACHE_RESULT_CHECK  ]
+if [ ! -e "$CACHE_RESULT_CHECK"  ]
 then
-    touch $CACHE_RESULT_CHECK
-elif [ ! -f $CACHE_RESULT_CHECK ] || [ -L $CACHE_RESULT_CHECK ]
+    touch "$CACHE_RESULT_CHECK"
+elif [ ! -f "$CACHE_RESULT_CHECK" ] || [ -L "$CACHE_RESULT_CHECK" ]
 then
     # something is wrong here...
     echo "ERROR: invalid cache file"
@@ -83,11 +85,11 @@ fi
 RUNNING_SECS=$(cat /proc/uptime | cut -d" " -f1 | cut -d"." -f1)
 
 # check if cache file with previously seen uptime is existing - create one otherwise
-if [ ! -e $CACHE_PREV_UPTIME ]
+if [ ! -e "$CACHE_PREV_UPTIME" ]
 then
-    echo 0 > $CACHE_PREV_UPTIME
+    echo 0 > "$CACHE_PREV_UPTIME"
     PREV_UPTIME=0
-elif [ ! -f $CACHE_PREV_UPTIME ] || [ -L $CACHE_PREV_UPTIME ]
+elif [ ! -f "$CACHE_PREV_UPTIME" ] || [ -L "$CACHE_PREV_UPTIME" ]
 then
     # something is wrong here...
     echo "ERROR: invalid cache file"
@@ -96,23 +98,23 @@ else
     # get cached information
     PREV_UPTIME=$(cat "$CACHE_PREV_UPTIME")
     # save current uptime
-    echo $RUNNING_SECS > $CACHE_PREV_UPTIME
+    echo "$RUNNING_SECS" > "$CACHE_PREV_UPTIME"
 fi
 
 # check if current uptime is lower than cached last seen uptime to detect reboot
 if (( RUNNING_SECS < PREV_UPTIME ))
 then
     # remove pre-reboot cache which requires reboot
-    rm -f $CACHE_RESULT_CHECK
+    rm -f "$CACHE_RESULT_CHECK"
     # create empty check cache
-    touch $CACHE_RESULT_CHECK
+    touch "$CACHE_RESULT_CHECK"
 fi
 
 echo "<<<yum>>>"
 
 # compare current and cached yum information
 # Update cached data if YUM fingerprint has changed OR machine has recently rebooted.
-if [ "$YUM_CURRENT" != "$YUM_CACHED" ] || [ ! -s $CACHE_RESULT_CHECK ]
+if [ "$YUM_CURRENT" != "$YUM_CACHED" ] || [ ! -s "$CACHE_RESULT_CHECK" ]
 then
     count=0
     # Check for running package manager processes
@@ -191,14 +193,15 @@ then
         LAST_UPDATE_TIMESTAMP=-1
     fi
 
-    echo $BOOT_REQUIRED
-    echo $UPDATES
-    echo $SECURITY_UPDATES
-    echo $LAST_UPDATE_TIMESTAMP
+    echo "$BOOT_REQUIRED"
+    echo "$UPDATES"
+    echo "$SECURITY_UPDATES"
+    echo "$LAST_UPDATE_TIMESTAMP"
 
-    # cache yum/dnf state
-    if [ -f $CACHE_YUM_UPDATE ] || [ ! -L $CACHE_YUM_UPDATE ]; then
-        echo "$YUM_CURRENT" > $CACHE_YUM_UPDATE
+    # cache check yum/dnf
+    # check if cached check already exists and is nothing but a file
+    if [ -f "$CACHE_YUM_UPDATE" ] || [ ! -L "$CACHE_YUM_UPDATE" ]; then
+        echo "$YUM_CURRENT" > "$CACHE_YUM_UPDATE"
     else
         # something is wrong here...
         echo "ERROR: invalid check cache file"
@@ -206,12 +209,12 @@ then
     fi
     
     # cache check results
-    if [ -f $CACHE_RESULT_CHECK ] || [ ! -L $CACHE_RESULT_CHECK ]
+    if [ -f "$CACHE_RESULT_CHECK" ] || [ ! -L "$CACHE_RESULT_CHECK" ]
     then
-        echo $BOOT_REQUIRED > $CACHE_RESULT_CHECK
-        echo $UPDATES >> $CACHE_RESULT_CHECK
-        echo $SECURITY_UPDATES >> $CACHE_RESULT_CHECK
-        echo $LAST_UPDATE_TIMESTAMP >> $CACHE_RESULT_CHECK
+        echo "$BOOT_REQUIRED" > "$CACHE_RESULT_CHECK"
+        echo "$UPDATES" >> "$CACHE_RESULT_CHECK"
+        echo "$SECURITY_UPDATES" >> "$CACHE_RESULT_CHECK"
+        echo "$LAST_UPDATE_TIMESTAMP" >> "$CACHE_RESULT_CHECK"
     else
         # something is wrong here...
         echo "ERROR: invalid check result cache file"
@@ -219,5 +222,5 @@ then
     fi
 else
     # use cache file
-    cat $CACHE_RESULT_CHECK
+    cat "$CACHE_RESULT_CHECK"
 fi
