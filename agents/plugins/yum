@@ -147,33 +147,39 @@ then
 
     # Count available updates - different commands for different package managers
     if [ "$PKG_MGR" = "dnf5" ]; then
-        UPDATES=$(waitmax 25 dnf5 list --upgrades 2>/dev/null | grep -E "^[a-zA-Z]" | wc -l || echo "-1")
+        UPDATES=$(timeout 25s dnf5 list --upgrades 2>/dev/null | grep -E "^[a-zA-Z]" | wc -l || echo "-1")
     else
-        UPDATES=$(waitmax 25 $PKG_MGR -C --noplugins --quiet list updates 2>/dev/null | grep "\." | cut -d' ' -f1 | wc -l || echo "-1")
+        UPDATES=$(timeout 25s $PKG_MGR -C --noplugins --quiet list updates 2>/dev/null | grep "\." | cut -d' ' -f1 | wc -l || echo "-1")
     fi
 
     # Check for security updates if supported
     if [ $SECURITY_SUPPORTED -eq 1 ]; then
         if [ "$PKG_MGR" = "dnf5" ]; then
             # dnf5 uses different command for security updates
-            SECURITY_UPDATES=$(waitmax 25 dnf5 -C --quiet check-upgrade --security 2>/dev/null | grep -E "^[a-zA-Z0-9]" | wc -l || echo "-1")
+            SECURITY_OUTPUT=$(timeout 25s dnf5 -C --quiet check-upgrade --security 2>/dev/null)
+            SECURITY_UPDATES=$(echo "$SECURITY_OUTPUT" | grep -E "^[a-zA-Z0-9]" | wc -l || echo "-1")
+            SECURITY_UPDATES_LIST=$(echo "$SECURITY_OUTPUT" | grep -E "^[a-zA-Z0-9]" | awk '{print $1}' | sed 's/\.[^.]*$//' | paste -sd, -)
         else
             # Test if --security is available for traditional yum/dnf
-            waitmax 25 $PKG_MGR -C --noplugins --quiet --security list updates > /dev/null 2>&1
+            timeout 25s $PKG_MGR -C --noplugins --quiet --security list updates > /dev/null 2>&1
             if [ $? -eq 0 ]; then
                 if [ "$PKG_MGR" = "dnf" ]; then
-                    SECURITY_UPDATES=$(waitmax 25 dnf -C --noplugins --quiet --security list updates 2>/dev/null | grep "\." | cut -d' ' -f1 | wc -l || echo "-1")
+                    SECURITY_OUTPUT=$(timeout 25s dnf -C --noplugins --quiet --security list updates 2>/dev/null)
                 else
-                    SECURITY_UPDATES=$(waitmax 25 yum -C --noplugins --quiet --security list updates 2>/dev/null | grep "\." | cut -d' ' -f1 | wc -l || echo "-1")
+                    SECURITY_OUTPUT=$(timeout 25s yum -C --noplugins --quiet --security list updates 2>/dev/null)
                 fi
+                SECURITY_UPDATES=$(echo "$SECURITY_OUTPUT" | grep "\." | cut -d' ' -f1 | wc -l || echo "-1")
+                SECURITY_UPDATES_LIST=$(echo "$SECURITY_OUTPUT" | grep "\." | cut -d' ' -f1 | sed 's/\.[^.]*$//' |  paste -sd, -)
             else
                 # --security not supported with this version
                 SECURITY_UPDATES="-2"
+                SECURITY_UPDATES_LIST=""
             fi
         fi
     else
         # Package manager doesn't support security updates
         SECURITY_UPDATES="-2"
+        SECURITY_UPDATES_LIST=""
     fi
 
     # Check last time of installed Updates from history
@@ -195,7 +201,7 @@ then
 
     echo "$BOOT_REQUIRED"
     echo "$UPDATES"
-    echo "$SECURITY_UPDATES"
+    echo "$SECURITY_UPDATES $SECURITY_UPDATES_LIST"
     echo "$LAST_UPDATE_TIMESTAMP"
 
     # cache check yum/dnf
@@ -213,7 +219,7 @@ then
     then
         echo "$BOOT_REQUIRED" > "$CACHE_RESULT_CHECK"
         echo "$UPDATES" >> "$CACHE_RESULT_CHECK"
-        echo "$SECURITY_UPDATES" >> "$CACHE_RESULT_CHECK"
+        echo "$SECURITY_UPDATES $SECURITY_UPDATES_LIST" >> "$CACHE_RESULT_CHECK"
         echo "$LAST_UPDATE_TIMESTAMP" >> "$CACHE_RESULT_CHECK"
     else
         # something is wrong here...
