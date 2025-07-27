@@ -57,6 +57,7 @@ class Section(NamedTuple):
     reboot_required: Optional[bool]
     packages: int = -1
     security_packages: int = -1
+    security_packages_list: Optional[str] = None
     last_update_timestamp: int = -1
     error_message: Optional[str] = None
 
@@ -74,10 +75,13 @@ def yum_parse(string_table: List[List[str]]) -> Section:
 
     packages = None
     security_packages = None
+    security_packages_list = None
     last_update_timestamp = None
     try:
         packages = int(string_table[1][0])
         security_packages = int(string_table[2][0])
+        if len(string_table[2]) > 1:
+            security_packages_list = string_table[2][1]
         last_update_timestamp = int(string_table[3][0])
     except KeyError:
         pass
@@ -86,6 +90,7 @@ def yum_parse(string_table: List[List[str]]) -> Section:
         reboot_required,
         packages,
         security_packages,
+        security_packages_list,
         last_update_timestamp)
 
 
@@ -141,7 +146,11 @@ def check_yum(params: Dict[str, object], section: Section):
             state = State.WARN
         else:
             state = State.OK
-        yield Result(state=state, summary=f"{section.security_packages} security updates available")
+        if section.security_packages_list:
+            summary = f"{section.security_packages} security updates available ({section.security_packages_list})"
+        else:
+            summary = f"{section.security_packages} security updates available"
+        yield Result(state=state, summary=summary)
         yield Metric(name="security_updates", value=section.security_packages)
 
     elif section.security_packages == -2:
