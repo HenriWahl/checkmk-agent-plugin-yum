@@ -107,11 +107,6 @@ def discovery_yum(section: Section):
 def check_yum(params: Dict[str, object], section: Section):
     debug = False
 
-    def extract_levels(entry, default):
-        if isinstance(entry, tuple) and isinstance(entry[0], str):
-            return entry[1]
-        return entry
-
     if section.error_message:
         yield Result(state=State.UNKNOWN, summary=section.error_message)
         return
@@ -127,11 +122,15 @@ def check_yum(params: Dict[str, object], section: Section):
         yield Result(state=State.OK, summary="All packages are up to date")
         yield Metric(name="normal_updates", value=0)
     else:
-        warn, crit = extract_levels(params.get("normal", (5, 10)), (5, 10))
-        if section.packages >= crit:
-            state = State.CRIT
-        elif section.packages >= warn:
-            state = State.WARN
+        mode, levels = params.get("normal")
+        if mode == 'fixed':
+            warn, crit = levels
+            if section.packages >= crit:
+                state = State.CRIT
+            elif section.packages >= warn:
+                state = State.WARN
+            else:
+                state = State.OK
         else:
             state = State.OK
         yield Result(state=state, summary=f"{section.packages} normal updates available")
@@ -139,11 +138,15 @@ def check_yum(params: Dict[str, object], section: Section):
 
     # === Security Updates ===
     if section.security_packages >= 0:
-        warn, crit = extract_levels(params.get("security", (1, 3)), (1, 3))
-        if section.security_packages >= crit:
-            state = State.CRIT
-        elif section.security_packages >= warn:
-            state = State.WARN
+        mode, levels = params.get("security")
+        if mode == 'fixed':
+            warn, crit = levels
+            if section.security_packages >= crit:
+                state = State.CRIT
+            elif section.security_packages >= warn:
+                state = State.WARN
+            else:
+                state = State.OK
         else:
             state = State.OK
         if section.security_packages_list:
@@ -204,8 +207,8 @@ check_plugin_yum = CheckPlugin(
     check_ruleset_name="yum",
     check_default_parameters={
         "reboot_req": 2,
-        "normal": (1, 3),
-        "security": (5, 10),
+        "normal": {"fixed": (1, 10)},
+        "security": {"fixed": (1, 1)},
         "last_update_state": 1,
         "last_update_time_diff": 60,
     },
