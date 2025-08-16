@@ -152,21 +152,20 @@ then
         fi
     done
 
-    # Check for kernel updates - different approach for different package managers
-    if [ "$PKG_MGR" = "dnf5" ]; then
-        # dnf5 has different output format - get only main kernel package, not kernel-core or kernel-modules
-        LATEST_KERNEL=$(dnf5 list --installed 2>/dev/null | grep -E "^kernel\.x86_64" | tail -n1 | awk '{print $2}')
-    else
-        # Traditional yum/dnf approach
-        LATEST_KERNEL=$($PKG_MGR -q -C --noplugins list installed 2>/dev/null | egrep "^(vz)?kernel(|-(uek|ml|lt))\." | grep "\." | tail -n1 | awk '{print $2}')
-    fi
-    
-    RUNNING_KERNEL=$(cat /proc/version | awk '{print $3}' | sed 's/.x86_64//g')
-    if [[ "$RUNNING_KERNEL" == "$LATEST_KERNEL"* ]]
-    then
+    # Check if reboot required for new kernel
+    KERNEL_PACKAGE=$(rpm -qf --qf "%{NAME}" /boot/config-$(uname -r))
+    if [ -z "$KERNEL_PACKAGE" ]; then
         BOOT_REQUIRED="no"
     else
-        BOOT_REQUIRED="yes"
+        RUNNING_KERNEL=$(rpm -qf --qf "%{VERSION}-%{RELEASE}\n" /boot/config-$(uname -r))
+        LATEST_KERNEL=$(rpm -q --last --qf "%{VERSION}-%{RELEASE}\n" $KERNEL_PACKAGE | grep -v $KERNEL_PACKAGE | head -n1)
+        LATEST_KERNEL="${LATEST_KERNEL%"${LATEST_KERNEL##*[![:space:]]}"}" # remove tailing whitespace
+
+        if [[ "$RUNNING_KERNEL" == "$LATEST_KERNEL" ]]; then
+            BOOT_REQUIRED="no"
+        else
+            BOOT_REQUIRED="yes"
+        fi
     fi
 
     # Count available updates - different commands for different package managers
