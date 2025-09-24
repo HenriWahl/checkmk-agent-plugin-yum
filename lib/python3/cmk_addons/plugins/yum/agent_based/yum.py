@@ -207,8 +207,8 @@ check_plugin_yum = CheckPlugin(
     check_ruleset_name="yum",
     check_default_parameters={
         "reboot_req": 2,
-        "normal": {"fixed": (1, 10)},
-        "security": {"fixed": (1, 1)},
+        "normal": ("fixed", (1, 10)),
+        "security": ("fixed", (1, 1)),
         "last_update_state": 1,
         "last_update_time_diff": 60,
     },
