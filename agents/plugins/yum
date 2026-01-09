@@ -60,25 +60,25 @@ if command -v dnf5 >/dev/null 2>&1; then
     HISTORY_CMD="dnf5 history list"
     LIST_CMD="dnf5 list --upgrades"
     SECURITY_SUPPORTED=1  # dnf5 supports security updates via check-upgrade --security
+    YUM_CURRENT="$(ls -lR /var/cache/libdnf5/ 2>/dev/null)"
 # Check for regular dnf (Fedora 22+ up to 40, CentOS 8+)
 elif command -v dnf >/dev/null 2>&1; then
     PKG_MGR="dnf"
     HISTORY_CMD="dnf history list"
     LIST_CMD="dnf list updates"
     SECURITY_SUPPORTED=1
+    YUM_CURRENT="$(ls -lR /var/cache/dnf/ 2>/dev/null)"
 # Fall back to yum (CentOS/RHEL 6-7)
 elif command -v yum >/dev/null 2>&1; then
     PKG_MGR="yum"
     HISTORY_CMD="yum history list"
     LIST_CMD="yum list updates"
     SECURITY_SUPPORTED=1
+    YUM_CURRENT="$(ls -lR /var/cache/yum/ 2>/dev/null)"
 else
     echo "ERROR: No supported package manager found (yum, dnf, or dnf5)"
     exit 2
 fi
-
-# get current package manager state - use cache directory contents as fingerprint
-YUM_CURRENT="$(ls -lR /var/cache/{yum,dnf}/ 2>/dev/null)"
 
 # check if cached listing of /var/cache/yum already exists - create empty one otherwise
 if [ ! -e "$CACHE_YUM_UPDATE" ]
