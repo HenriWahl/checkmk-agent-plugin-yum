@@ -158,7 +158,8 @@ then
 
     # Count available updates - different commands for different package managers
     if [ "$PKG_MGR" = "dnf5" ]; then
-        UPDATES=$(timeout 25s dnf5 list --upgrades 2>/dev/null | grep -E "^[a-zA-Z]" | wc -l || echo "-1")
+        LOCKEDRE=$(dnf5 versionlock list | grep -o -P '(?<=^Package name: ).+' | tr '\n' '|' | sed 's/|/\\.|/g; s/|$//')
+        UPDATES=$(timeout 25s dnf5 list --upgrades 2>/dev/null | grep -E "^[a-zA-Z]" | tail -n +2 | grep -v -P "$LOCKEDRE" | wc -l || echo "-1")
     else
         UPDATES=$(timeout 25s $PKG_MGR -C --noplugins --quiet list updates 2>/dev/null | grep "\." | cut -d' ' -f1 | wc -l || echo "-1")
     fi
