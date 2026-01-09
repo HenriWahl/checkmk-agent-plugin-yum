@@ -140,18 +140,6 @@ echo "<<<yum>>>"
 # Update cached data if YUM fingerprint has changed OR machine has recently rebooted.
 if [ "$YUM_CURRENT" != "$YUM_CACHED" ] || [ ! -s "$CACHE_RESULT_CHECK" ]
 then
-    count=0
-    # Check for running package manager processes
-    while [ -n "$(pgrep -f "(python|/usr/bin/).*/(yum|dnf)" | head -1)" ]; do
-        if [ $count -eq 3 ]; then
-            echo "ERROR: Tried to run $PKG_MGR for 30 secs but another package manager instance was running"
-            exit 2
-        else
-            ((count++))
-            sleep 10
-        fi
-    done
-
     # Check if reboot required for new kernel
     KERNEL_PACKAGE=$(rpm -qf --qf "%{NAME}" /boot/config-$(uname -r))
     if [ -z "$KERNEL_PACKAGE" ]; then
