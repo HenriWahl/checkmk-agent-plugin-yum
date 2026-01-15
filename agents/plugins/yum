@@ -158,7 +158,7 @@ then
         BOOT_REQUIRED="no"
     else
         RUNNING_KERNEL=$(rpm -qf --qf "%{VERSION}-%{RELEASE}\n" /boot/config-$(uname -r))
-        LATEST_KERNEL=$(rpm -q --last --qf "%{VERSION}-%{RELEASE}\n" $KERNEL_PACKAGE | grep -v $KERNEL_PACKAGE | head -n1)
+        LATEST_KERNEL=$(rpm -q --last --qf "%{VERSION}-%{RELEASE}\n" $KERNEL_PACKAGE | grep -v $KERNEL_PACKAGE |sort -r --version-sort |head -n1)
         LATEST_KERNEL="${LATEST_KERNEL%"${LATEST_KERNEL##*[![:space:]]}"}" # remove tailing whitespace
 
         if [[ "$RUNNING_KERNEL" == "$LATEST_KERNEL" ]]; then
