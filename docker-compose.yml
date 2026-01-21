@@ -1,0 +1,39 @@
+# just for local testing
+volumes:
+  sites:
+
+services:
+  checkmk:
+    # feature equivalent to enterprise edition but just 30 days trial
+    # nice to check extension GUI stuff
+    image: checkmk
+    build:
+      context: .
+      dockerfile: dockerfiles/checkmk/Dockerfile
+      args:
+        CHECKMK_VERSION: 2.4.0p19
+        CMK_PASSWORD: cmkadmin
+        CMK_SITE_ID: cmk
+    restart: unless-stopped
+    ports:
+      - 5000:5000
+    environment:
+      TZ: Europe/Berlin
+    volumes:
+      # meta-info about yum package for Checkmk extensions management
+      - ${PWD}/mkp/var/check_mk/packages/yum:/omd/sites/cmk/var/check_mk/packages/yum
+      # agent plugin to run on monitored hosts
+      - ${PWD}/mkp/local/share/check_mk/agents/plugins/yum:/omd/sites/cmk/local/share/check_mk/agents/plugins/yum
+      # bakery - not fully upgraded to the new layout in Checkmk 2.4 itself
+      - ${PWD}/mkp/local/lib/python3/cmk/base/cee/plugins/bakery/yum.py:/omd/sites/cmk/local/lib/python3/cmk/base/cee/plugins/bakery/yum.py
+      # already updated part of plugin
+      - ${PWD}/mkp/local/lib/python3/cmk_addons/plugins/yum:/omd/sites/cmk/local/lib/python3/cmk_addons/plugins/yum
+
+  client:
+    # client for testing, can be added in web GUI
+    image: checkmk-client
+    build:
+      context: dockerfiles/client
+    restart: unless-stopped
+    volumes:
+      - ${PWD}/mkp/local/share/check_mk/agents/plugins:/usr/lib/check_mk_agent/plugins:ro
