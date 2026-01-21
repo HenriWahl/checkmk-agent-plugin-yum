@@ -35,5 +35,9 @@ services:
     build:
       context: dockerfiles/client
     restart: unless-stopped
+    environment:
+      MK_VARDIR: /var/lib/check_mk_agent
+    post_start:
+      - command: /usr/bin/chmod -R +x /usr/lib/check_mk_agent/plugins
     volumes:
-      - ${PWD}/mkp/local/share/check_mk/agents/plugins:/usr/lib/check_mk_agent/plugins:ro
+      - ${PWD}/mkp/local/share/check_mk/agents/plugins:/usr/lib/check_mk_agent/plugins

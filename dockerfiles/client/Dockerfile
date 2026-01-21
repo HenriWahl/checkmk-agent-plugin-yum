@@ -1,13 +1,13 @@
-FROM debian:13-slim
+FROM rockylinux:8
 
-COPY check-mk-agent*.deb /tmp/
+COPY check-mk-agent*.rpm /tmp/
 
-RUN apt -y update && \
-    apt -y install bind9-host\
-                   docker-cli \
-                   iproute2 \
+RUN dnf -y install iproute \
+                   lsof \
+                   procps-ng\
                    xinetd
-RUN apt install -y /tmp/*.deb && rm -f /tmp/check-mk-agent*.deb
+RUN dnf -y install /tmp/*.rpm && \
+    rm -f /tmp/check-mk-agent*.rpm
 
 COPY check-mk-agent /etc/xinetd.d/check-mk-agent
 
