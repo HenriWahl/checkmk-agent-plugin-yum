@@ -55,7 +55,7 @@ jobs:
       # upload results
       - uses: actions/upload-artifact@v4
         with:
-          path: ./*.mkp
+          path: ./mkp/*.mkp
           retention-days: 1
 
 #    steps:
