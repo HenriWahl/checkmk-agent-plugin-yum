@@ -51,7 +51,12 @@ jobs:
       - run: ${SU} "mkp package ${CMK}/tmp/check_mk/yum.manifest.temp"
        # copy created extension package back into volume
       - run: cp ${CMK}/var/check_mk/packages_local/*.mkp ${PWD}/mkp/
-
+      - run: find . -name "*.mkp"
+      # upload results
+      - uses: actions/upload-artifact@v4
+        with:
+          path: ./*.mkp
+          retention-days: 1
 
 #    steps:
 #      - uses: actions/checkout@v4
