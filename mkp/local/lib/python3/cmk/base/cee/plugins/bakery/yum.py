@@ -11,7 +11,6 @@ def get_yum_files(conf: Any) -> FileGenerator:
     """
     Simple bakery plugin generator for yum
     """
-
     # when interval is set, convert to int, otherwise None is okay
     interval = conf.get('interval')
     if interval:

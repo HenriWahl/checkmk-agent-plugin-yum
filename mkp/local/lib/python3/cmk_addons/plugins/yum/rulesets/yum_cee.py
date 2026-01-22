@@ -60,7 +60,7 @@ def _parameter_form_yum_bakery() -> Dictionary:
         elements={
             'interval': DictElement(
                 parameter_form=TimeSpan(
-                    title=Title('Run asynchronously'),
+                    title=Title('Custom execution interval'),
                     label=Label('Interval for collecting data'),
                     help_text=Help(
                         'Determines how often the plugin will run on a deployed agent.'),
@@ -68,7 +68,7 @@ def _parameter_form_yum_bakery() -> Dictionary:
                                           TimeMagnitude.MINUTE,
                                           TimeMagnitude.HOUR,
                                           TimeMagnitude.DAY],
-                    prefill=DefaultValue(60.0),
+                    prefill=DefaultValue(DEFAULT_INTERVAL),
                 )
             )
         },
@@ -81,5 +81,5 @@ rule_spec_yum_bakery = AgentConfig(
     parameter_form=_parameter_form_yum_bakery,
     topic=Topic.APPLICATIONS,
     help_text=Help('This will deploy the agent plugin <tt>YUM</tt> '
-                   'for checking patch status.'),
+                   'for checking package update status.'),
 )
