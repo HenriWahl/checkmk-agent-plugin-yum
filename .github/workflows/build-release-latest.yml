@@ -40,6 +40,7 @@ jobs:
       - run: ls -l
       - run: pwd
       - run: ls -l /omd/sites/cmk
+      - run: git show
       - run: cp -r mkp/local/* ${CMK}/local
       - run: ${SU} "mkdir ${CMK}/tmp/check_mk"
       - run: ${SU} "mkp template containers_running"
