@@ -20,7 +20,7 @@ jobs:
       - id: get_hash
         run: echo "HASH=$(ls -lR | xargs | md5sum | cut -d\  -f1)" >> $GITHUB_OUTPUT
       - id: get_image
-        run: echo "(${{ github.repository }} | tr '[:upper:]' '[:lower:]'):${{ steps.get_hash.outputs.HASH }}"
+        run: echo "$(${{ github.repository }} | tr '[:upper:]' '[:lower:]'):${{ steps.get_hash.outputs.HASH }}"
       # build container image for package creation
       - run: docker pull ${{ env.cr_image }}:${{ steps.get_hash.outputs.HASH }} || docker build -t ${{ env.cr_image }}:${{ steps.get_hash.outputs.HASH }} -f dockerfiles/checkmk/Dockerfile .
       - run: docker push ${{ env.cr_image }}:${{ steps.get_hash.outputs.HASH }}
