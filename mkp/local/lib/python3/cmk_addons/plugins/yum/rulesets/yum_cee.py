@@ -33,27 +33,24 @@ DEFAULT_INTERVAL = 60.0
 
 def _migrate_int_to_float(value: object) -> Mapping[str, object]:
     """
-    migrate old integer interval to float interval
+    migrate from deploy to interval and from integer interval to float interval
     """
-    if value is not None:
-        if 'interval' in value:
-            match value["interval"]:
-                case _ if value["interval"] >= 0:
-                    return {'deploy': ('interval', float(value["interval"]))}
-                case None:
-                    return {'deploy': ('interval', 77.0)}
-        else:
-            return value
+    # backward compatibility - migrate from deploy to interval
+    if value.get('deploy'):
+        if value['deploy'].get('interval'):
+            return {'interval': float(value['deploy']['interval'])}
+    # new simpler interval form
+    elif value.get('interval'):
+        return {'interval': float(value['interval'])}
     else:
-        return {'deploy': 'nointerval'}
+        return dict()
 
 
 def _parameter_form_yum_bakery() -> Dictionary:
-
-
-    # here we need to respect the deploy dictionary -> migrate it to simple interval
-
-
+    """
+    definition of the parameter form for the YUM bakery plugin
+    :return:
+    """
     return Dictionary(
         migrate=_migrate_int_to_float,
         title=Title('YUM package update check'),
@@ -71,7 +68,7 @@ def _parameter_form_yum_bakery() -> Dictionary:
                                           TimeMagnitude.MINUTE,
                                           TimeMagnitude.HOUR,
                                           TimeMagnitude.DAY],
-                    prefill=DefaultValue(60),
+                    prefill=DefaultValue(60.0),
                 )
             )
         },
