@@ -27,7 +27,14 @@ from cmk.rulesets.v1.form_specs import (
 from cmk.rulesets.v1.rule_specs import AgentConfig, Topic, Title, Help
 
 
-def _migrateInt(value: object) -> Mapping[str, object]:
+# default interval in seconds
+DEFAULT_INTERVAL = 60.0
+
+
+def _migrate_int_to_float(value: object) -> Mapping[str, object]:
+    """
+    migrate old integer interval to float interval
+    """
     if value is not None:
         if 'interval' in value:
             match value["interval"]:
@@ -42,7 +49,13 @@ def _migrateInt(value: object) -> Mapping[str, object]:
 
 
 def _parameter_form_yum_bakery() -> Dictionary:
+
+
+    # here we need to respect the deploy dictionary -> migrate it to simple interval
+
+
     return Dictionary(
+        migrate=_migrate_int_to_float,
         title=Title('YUM package update check'),
         help_text=Help('This will deploy the agent plugin <tt>Yum</tt>. This will activate the '
                        'check <tt>YUM</tt> on RedHat based hosts and monitor pending normal and security updates.'
