@@ -45,7 +45,7 @@ jobs:
       - run: ${SU} "mkp template containers_running"
       - run: echo ${PWD}
       - run: ${SU} "git config --global --add safe.directory $(pwd)"
-      - run: git show
+      - run: ${SU} "git show"
       - run: modify-extension.py ${PWD} ${CMK}/tmp/check_mk/containers_running.manifest.temp
       # avoid error:
       # Error removing file /omd/sites/cmk/local/lib/python3/cmk/base/cee/plugins/bakery/containers_running.py: [Errno 13] Permission denied: '/omd/sites/cmk/local/lib/python3/cmk/base/cee/plugins/bakery/containers_running.py'
