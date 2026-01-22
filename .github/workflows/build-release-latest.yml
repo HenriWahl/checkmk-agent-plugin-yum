@@ -43,33 +43,20 @@ jobs:
       - run: modify-extension.py ${PWD} ${CMK}/tmp/check_mk/yum.manifest.temp
       # avoid error:
       # Error removing file /omd/sites/cmk/local/lib/python3/cmk/base/cee/plugins/bakery/yum.py: [Errno 13] Permission denied: '/omd/sites/cmk/local/lib/python3/cmk/base/cee/plugins/bakery/yum.py'
+      # and likewise the `mkp package` fails due to already existing files
       - run: chmod go+rw ${CMK}/local/lib/python3/cmk/base/cee/plugins/bakery
       - run: chmod go+rw ${CMK}/local/lib/python3/cmk_addons/plugins/yum/agent_based
       - run: chmod go+rw ${CMK}/local/lib/python3/cmk_addons/plugins/yum/checkman
       - run: chmod go+rw ${CMK}/local/lib/python3/cmk_addons/plugins/yum/rulesets
       - run: cat ${CMK}/tmp/check_mk/yum.manifest.temp
       - run: ${SU} "mkp package ${CMK}/tmp/check_mk/yum.manifest.temp"
-       # copy created extension package back into volume
+      # copy created extension package back to workspace
       - run: cp ${CMK}/var/check_mk/packages_local/*.mkp ${PWD}/mkp/
-      - run: find . -name "*.mkp"
       # upload results
       - uses: actions/upload-artifact@v4
         with:
           path: ./mkp/*.mkp
           retention-days: 1
-
-#    steps:
-#      - uses: actions/checkout@v4
-#      # build container image for package creation
-#      - run: /usr/bin/docker build -t ${{ github.job }} -f dockerfiles/checkmk/Dockerfile .
-#      # actually build .mkp file
-#      - run: /usr/bin/docker run --volume $PWD:/source ${{ github.job }}
-#      # upload results
-#      - uses: actions/upload-artifact@v4
-#        with:
-#          path: ./*.mkp
-#          retention-days: 1
-
 
   github-release:
     runs-on: ubuntu-latest
