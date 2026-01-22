@@ -18,7 +18,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - id: get_hash
-        run: echo "HASH=$(ls -lR mkp | xargs | md5sum | cut -d\  -f1)" >> $GITHUB_OUTPUT
+        run: echo "HASH=$(find mkp -type f -printf '%p:%s' | xargs | md5sum | cut -d\  -f1)" >> $GITHUB_OUTPUT
       - id: get_image
         run: echo "IMAGE=$(echo ghcr.io/${{ github.repository }} | tr '[:upper:]' '[:lower:]'):${{ steps.get_hash.outputs.HASH }}" >> $GITHUB_OUTPUT
       - run: echo "image ${{ steps.get_image.outputs.IMAGE }}"
