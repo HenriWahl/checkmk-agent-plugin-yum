@@ -1,6 +1,7 @@
 ARG CHECKMK_VERSION=2.4.0p19
 
-FROM checkmk/check-mk-cloud:${CHECKMK_VERSION}
+#FROM checkmk/check-mk-cloud:${CHECKMK_VERSION}
+FROM checkmk/check-mk-raw:${CHECKMK_VERSION}
 LABEL maintainer=henri@nagstamon.de
 
 ARG DEBIAN_FRONTEND=noninteractive
