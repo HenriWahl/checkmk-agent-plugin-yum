@@ -9,6 +9,9 @@ from cmk.base.cee.plugins.bakery.bakery_api.v1 import FileGenerator, OS, Plugin,
 
 def get_yum_files(conf: Any) -> FileGenerator:
     # when interval is set, convert to int, otherwise None is okay
+
+    # -> maybe check for deploy.interval too for backward compatibility?
+
     interval = conf.get('interval')
     if interval:
         interval = int(interval)
