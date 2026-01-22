@@ -8,17 +8,16 @@ from cmk.base.cee.plugins.bakery.bakery_api.v1 import FileGenerator, OS, Plugin,
 
 
 def get_yum_files(conf: Any) -> FileGenerator:
-#    if conf.get('deploy', 'nointerval') == 'nointerval':
-#      return
-  if conf.get('interval') is not None:
-    interval=conf.get('interval')
-  elif conf.get('deploy', 'interval')[1] is not None:
-    interval=conf.get('deploy', 'interval')[1]
+    # when interval is set, convert to int, otherwise None is okay
+    interval = conf.get('interval')
+    if interval:
+        interval = int(interval)
 
-  yield Plugin(base_os=OS.LINUX,
-               source=Path('yum'),
-               interval=int(interval)
-  )
+    yield Plugin(base_os=OS.LINUX,
+                 source=Path('yum'),
+                 interval=interval
+                 )
+
 
 register.bakery_plugin(
     name='yum',
