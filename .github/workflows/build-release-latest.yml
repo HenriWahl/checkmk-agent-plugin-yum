@@ -22,7 +22,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       # somehow weird way to get the hash over the requirements to be aware if they changed
       - id: get_hash
-        run: echo "HASH=$(ls -lR | xargs | md5sum ) | cut -d\  -f1)" >> $GITHUB_OUTPUT
+        run: echo "HASH=$(ls -lR | xargs | md5sum | cut -d\  -f1)" >> $GITHUB_OUTPUT
       # build container image for package creation
       - run: docker pull ${{ env.cr_image }}:${{ steps.get_hash.outputs.HASH }} || docker build -t ${{ env.cr_image }}:${{ steps.get_hash.outputs.HASH }} -f dockerfiles/checkmk/Dockerfile .
       - run: docker push ${{ env.cr_image }}:${{ steps.get_hash.outputs.HASH }}
