@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       # build container image for package creation
-      - run: /usr/bin/docker build -t ${{ github.job }} -f build/Dockerfile .
+      - run: /usr/bin/docker build -t ${{ github.job }} -f dockerfiles/checkmk/Dockerfile .
       # actually build .mkp file
       - run: /usr/bin/docker run --volume $PWD:/source ${{ github.job }}
       # upload results
