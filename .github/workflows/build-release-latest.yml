@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-image
     container:
-        image: ${{ env.cr_image }}:${{ needs.build-image.outputs.HASH }}
+        image: ${{ env.cr_image }}:${{ steps.get_hash.outputs.HASH }}
     steps:
       - run: ls
 
