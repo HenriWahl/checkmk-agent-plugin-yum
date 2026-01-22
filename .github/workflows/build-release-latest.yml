@@ -30,20 +30,15 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-image
     container:
-      #image: ${{ env.cr_image }}:${{ needs.build-image.outputs.image_tag }}
       image: ${{ needs.build-image.outputs.image }}
       env:
         CMK: /omd/sites/cmk
         SU: su - cmk -c
     steps:
       - uses: actions/checkout@v4
-      - run: ls -l /
-      - run: pwd
-      - run: ls -l /omd/sites/cmk
       - run: cp -r mkp/local/* ${CMK}/local
       - run: ${SU} "mkdir ${CMK}/tmp/check_mk"
       - run: ${SU} "mkp template yum"
-      - run: echo ${PWD}
       - run: git config --global --add safe.directory ${PWD}
       - run: modify-extension.py ${PWD} ${CMK}/tmp/check_mk/yum.manifest.temp
       # avoid error:
@@ -51,6 +46,7 @@ jobs:
       - run: chmod go+rw ${CMK}/local/lib/python3/cmk/base/cee/plugins/bakery
       - run: chmod go+rw ${CMK}/local/lib/python3/cmk_addons/plugins/yum/agent_based
       - run: chmod go+rw ${CMK}/local/lib/python3/cmk_addons/plugins/yum/rulesets
+      - run: cat ${CMK}/tmp/check_mk/yum.manifest.temp
       - run: ${SU} "mkp package ${CMK}/tmp/check_mk/yum.manifest.temp"
        # copy created extension package back into volume
       - run: cp ${CMK}/var/check_mk/packages_local/*.mkp ${PWD}/mkp/
