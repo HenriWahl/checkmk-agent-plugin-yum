@@ -35,7 +35,7 @@ jobs:
         CMK: /omd/sites/cmk
         SU: su - cmk -c
     steps:
-      - run: ls
+      - run: ls -l
       - run: pwd
       - run: ls -l /omd/sites/cmk
       - run: cp -r mkp/local/* ${CMK}/local
