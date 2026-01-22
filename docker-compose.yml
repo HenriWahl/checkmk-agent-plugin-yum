@@ -1,7 +1,3 @@
-# just for local testing
-volumes:
-  sites:
-
 services:
   checkmk:
     # feature equivalent to enterprise edition but just 30 days trial
@@ -36,8 +32,10 @@ services:
       context: dockerfiles/client
     restart: unless-stopped
     environment:
+      # check_mk_agent needs to know where to store its state
       MK_VARDIR: /var/lib/check_mk_agent
     post_start:
+      # check_mk_agent requires executable plugins
       - command: /usr/bin/chmod -R +x /usr/lib/check_mk_agent/plugins
     volumes:
       - ${PWD}/mkp/local/share/check_mk/agents/plugins:/usr/lib/check_mk_agent/plugins
