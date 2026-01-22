@@ -45,6 +45,7 @@ jobs:
       # Error removing file /omd/sites/cmk/local/lib/python3/cmk/base/cee/plugins/bakery/yum.py: [Errno 13] Permission denied: '/omd/sites/cmk/local/lib/python3/cmk/base/cee/plugins/bakery/yum.py'
       - run: chmod go+rw ${CMK}/local/lib/python3/cmk/base/cee/plugins/bakery
       - run: chmod go+rw ${CMK}/local/lib/python3/cmk_addons/plugins/yum/agent_based
+      - run: chmod go+rw ${CMK}/local/lib/python3/cmk_addons/plugins/yum/checkman
       - run: chmod go+rw ${CMK}/local/lib/python3/cmk_addons/plugins/yum/rulesets
       - run: cat ${CMK}/tmp/check_mk/yum.manifest.temp
       - run: ${SU} "mkp package ${CMK}/tmp/check_mk/yum.manifest.temp"
