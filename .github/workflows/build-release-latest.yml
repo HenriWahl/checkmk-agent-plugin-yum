@@ -45,6 +45,7 @@ jobs:
       - run: ${SU} "mkp template containers_running"
       - run: echo ${PWD}
       - run: ${SU} "git config --global --add safe.directory $(pwd)"
+      - run: ${SU} "pwd"
       - run: ${SU} "git show"
       - run: modify-extension.py ${PWD} ${CMK}/tmp/check_mk/containers_running.manifest.temp
       # avoid error:
