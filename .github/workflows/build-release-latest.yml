@@ -7,7 +7,7 @@ on:
 env:
   # ERROR: failed to build: invalid tag "ghcr.io/HenriWahl/checkmk-agent-plugin-yum/build:build-image": repository name must be lowercase
   # this is the penalty for using uppercase letters in repository names...
-  cr_image: ghcr.io/henriwahl/checkmk-agent-plugin-yum/build:${{ github.run_id }}
+  cr_image: ghcr.io/henriwahl/checkmk-agent-plugin-yum/build
 
 jobs:
   build-image:
