@@ -36,6 +36,7 @@ jobs:
         CMK: /omd/sites/cmk
         SU: su - cmk -c
     steps:
+      - uses: actions/checkout@v4
       - run: ls -l
       - run: pwd
       - run: ls -l /omd/sites/cmk
