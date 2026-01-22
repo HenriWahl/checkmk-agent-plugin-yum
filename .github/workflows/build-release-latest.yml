@@ -36,6 +36,7 @@ jobs:
         SU: su - cmk -c
     steps:
       - run: ls
+      - run: pwd
       - run: ls -l /omd/sites/cmk
       - run: cp -r mkp/local/* ${CMK}/local
       - run: ${SU} "mkdir ${CMK}/tmp/check_mk"
