@@ -71,20 +71,20 @@ jobs:
 #          retention-days: 1
 
 
-#  github-release:
-#    runs-on: ubuntu-latest
-#    needs: build-package
-#    steps:
-#      - uses: actions/download-artifact@v4
-#      - run: cd artifact && md5sum *.mkp > md5sums.txt
-#      - run: cd artifact && sha256sum *.mkp > sha256sums.txt
-#      - uses: marvinpinto/action-automatic-releases@latest
-#        with:
-#          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-#          automatic_release_tag: "latest"
-#          prerelease: true
-#          files: |
-#            artifact/*
+  github-release:
+    runs-on: ubuntu-latest
+    needs: build-package
+    steps:
+      - uses: actions/download-artifact@v4
+      - run: cd artifact && md5sum *.mkp > md5sums.txt
+      - run: cd artifact && sha256sum *.mkp > sha256sums.txt
+      - uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: true
+          files: |
+            artifact/*
 
 #  ghcr.io-cleanup:
 #  - name: ghcr.io cleanup action
