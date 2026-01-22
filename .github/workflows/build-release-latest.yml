@@ -43,6 +43,7 @@ jobs:
       - run: cp -r mkp/local/* ${CMK}/local
       - run: ${SU} "mkdir ${CMK}/tmp/check_mk"
       - run: ${SU} "mkp template containers_running"
+      - run: echo ${PWD}
       - run: ${SU} "git config --global --add safe.directory ${PWD}"
       - run: git show
       - run: modify-extension.py ${PWD} ${CMK}/tmp/check_mk/containers_running.manifest.temp
