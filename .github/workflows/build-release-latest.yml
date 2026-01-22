@@ -8,7 +8,7 @@ jobs:
   build-image:
     runs-on: ubuntu-latest
     outputs:
-      image_tag: ${{ steps.get_hash.outputs.HASH }}
+      image: ${{ steps.get_image.outputs.IMAGE }}
     steps:
       - uses: actions/checkout@v4
       # docker login is needed for pushing the test image
@@ -20,7 +20,7 @@ jobs:
       - id: get_hash
         run: echo "HASH=$(ls -lR | xargs | md5sum | cut -d\  -f1)" >> $GITHUB_OUTPUT
       - id: get_image
-        run: echo "$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]'):${{ steps.get_hash.outputs.HASH }}"
+        run: echo "IMAGE=$(echo ghcr.io/${{ github.repository }} | tr '[:upper:]' '[:lower:]'):${{ steps.get_hash.outputs.HASH }}" >> $GITHUB_OUTPUT
       # build container image for package creation
       - run: docker pull ${{ env.cr_image }}:${{ steps.get_hash.outputs.HASH }} || docker build -t ${{ env.cr_image }}:${{ steps.get_hash.outputs.HASH }} -f dockerfiles/checkmk/Dockerfile .
       - run: docker push ${{ env.cr_image }}:${{ steps.get_hash.outputs.HASH }}
@@ -30,7 +30,7 @@ jobs:
     needs: build-image
     container:
       #image: ${{ env.cr_image }}:${{ needs.build-image.outputs.image_tag }}
-      image: ghcr.io/henriwahl/checkmk-agent-plugin-yum/build:${{ needs.build-image.outputs.image_tag }}
+      image: ${{ needs.build-image.outputs.image }}
     steps:
       - run: ls
 
