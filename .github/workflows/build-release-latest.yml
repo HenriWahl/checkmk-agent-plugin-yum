@@ -31,8 +31,26 @@ jobs:
     container:
       #image: ${{ env.cr_image }}:${{ needs.build-image.outputs.image_tag }}
       image: ${{ needs.build-image.outputs.image }}
+      env:
+        CMK: /omd/sites/cmk
+        SU: su - cmk -c
     steps:
       - run: ls
+      - run: ls -l /omd/sites/cmk
+      - run: cp -r mkp/local/* ${CMK}/local
+      - run: ${SU} "mkdir ${CMK}/tmp/check_mk"
+      - run: ${SU} "mkp template containers_running"
+      - run: ${SU} "git config --global --add safe.directory ${CMK}"
+      - run: modify-extension.py ${PWD} ${CMK}/tmp/check_mk/containers_running.manifest.temp
+      # avoid error:
+      # Error removing file /omd/sites/cmk/local/lib/python3/cmk/base/cee/plugins/bakery/containers_running.py: [Errno 13] Permission denied: '/omd/sites/cmk/local/lib/python3/cmk/base/cee/plugins/bakery/containers_running.py'
+      - run: chmod go+rw ${CMK}/local/lib/python3/cmk/base/cee/plugins/bakery
+      - run: chmod go+rw ${CMK}/local/lib/python3/cmk_addons/plugins/containers_running/agent_based
+      - run: chmod go+rw ${CMK}/local/lib/python3/cmk_addons/plugins/containers_running/rulesets
+      - run: ${SU} "mkp package ${CMK}/tmp/check_mk/containers_running.manifest.temp"
+       # copy created extension package back into volume
+      - run: cp ${CMK}/var/check_mk/packages_local/*.mkp ${PWD}/mkp/
+
 
 #    steps:
 #      - uses: actions/checkout@v4
