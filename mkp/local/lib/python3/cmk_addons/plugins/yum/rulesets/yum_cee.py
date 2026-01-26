@@ -120,6 +120,7 @@ def _parameter_form_yum_bakery() -> Dictionary:
                     elements=[
                         CascadingSingleChoiceElement(
                             name='interval_1',
+                            title=Title('interval_1'),
                             parameter_form=Dictionary(
                                 title=Title('Dictionary YUM package update check'),
                                 help_text=Help('This will deploy the agent plugin <tt>Yum</tt>. This will activate the '
