@@ -43,7 +43,7 @@ def _migrate_int_to_float(value: object) -> Mapping[str, object]:
     elif value.get('interval'):
         return {'interval': float(value['interval'])}
     else:
-        return dict()
+        return {'interval': DEFAULT_INTERVAL}
 
 
 def _parameter_form_yum_bakery() -> Dictionary:
