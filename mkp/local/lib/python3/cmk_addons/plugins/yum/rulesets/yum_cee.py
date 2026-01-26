@@ -79,7 +79,7 @@ rule_spec_yum_bakery = AgentConfig(
     title=Title('YUM plugin'),
     name='yum',
     parameter_form=_parameter_form_yum_bakery,
-    topic=Topic.APPLICATIONS,
+    topic=Topic.GENERAL,
     help_text=Help('This will deploy the agent plugin <tt>YUM</tt> '
                    'for checking package update status.'),
 )
