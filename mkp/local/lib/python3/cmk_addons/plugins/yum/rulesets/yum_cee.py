@@ -55,17 +55,17 @@ def _parameter_form_yum_bakery_new() -> Dictionary:
     return Dictionary(
         # migrate=_migrate_int_to_float,
         title=Title('YUM package update check'),
-        help_text=Help('This will deploy the agent plugin <tt>Yum</tt>. This will activate the '
-                       'check <tt>YUM</tt> on RedHat based hosts and monitor pending normal and security updates.'
-                       ),
+        # help_text=Help('This will deploy the agent plugin <tt>Yum</tt>. This will activate the '
+        #                'check <tt>YUM</tt> on RedHat based hosts and monitor pending normal and security updates.'
+        #                ),
         elements={
             'deploy': DictElement(
                 required=True,
                 parameter_form=CascadingSingleChoice(
                     title=Title('CascadingSingleChoice Deployment options for the Yum plugin.'),
                     # prefill=DefaultValue("interval"),
-                    help_text=Help(
-                        'Determines how the the <tt>Yum</tt> plugin will run on a deployed agent or disables it on an deployed agent'),
+                    # help_text=Help(
+                    #     'Determines how the the <tt>Yum</tt> plugin will run on a deployed agent or disables it on an deployed agent'),
                     elements=[
 
                     ]
@@ -75,8 +75,8 @@ def _parameter_form_yum_bakery_new() -> Dictionary:
                 parameter_form=TimeSpan(
                     title=Title('Custom execution interval'),
                     label=Label('Interval for collecting data'),
-                    help_text=Help(
-                        'Determines how often the plugin will run on a deployed agent.'),
+                    # help_text=Help(
+                    #     'Determines how often the plugin will run on a deployed agent.'),
                     displayed_magnitudes=[TimeMagnitude.SECOND,
                                           TimeMagnitude.MINUTE,
                                           TimeMagnitude.HOUR,
@@ -106,33 +106,33 @@ def _parameter_form_yum_bakery() -> Dictionary:
     return Dictionary(
         migrate=_migrateInt,
         title=Title('Deploy the Yum plugin'),
-        help_text=Help('This will deploy the agent plugin <tt>Yum</tt>. This will activate the '
-                       'check <tt>Yum</tt> on redHat based hosts and monitor pending normal and security updates.'
-                       ),
+        # help_text=Help('This will deploy the agent plugin <tt>Yum</tt>. This will activate the '
+        #                'check <tt>Yum</tt> on redHat based hosts and monitor pending normal and security updates.'
+        #                ),
         elements={
             "deploy": DictElement(
                 required=True,
                 parameter_form=CascadingSingleChoice(
                     title=Title('CascadingSingleChoice Deployment options for the Yum plugin.'),
                     # prefill=DefaultValue("interval"),
-                    help_text=Help(
-                        'Determines how the the <tt>Yum</tt> plugin will run on a deployed agent or disables it on an deployed agent'),
+                    # help_text=Help(
+                    #     'Determines how the the <tt>Yum</tt> plugin will run on a deployed agent or disables it on an deployed agent'),
                     elements=[
                         CascadingSingleChoiceElement(
                             name='interval_1',
                             title=Title('interval_1'),
                             parameter_form=Dictionary(
                                 title=Title('Dictionary YUM package update check'),
-                                help_text=Help('This will deploy the agent plugin <tt>Yum</tt>. This will activate the '
-                                               'check <tt>YUM</tt> on RedHat based hosts and monitor pending normal and security updates.'
-                                               ),
+                                # help_text=Help('This will deploy the agent plugin <tt>Yum</tt>. This will activate the '
+                                #                'check <tt>YUM</tt> on RedHat based hosts and monitor pending normal and security updates.'
+                                #                ),
                                 elements={
                                     'interval_2': DictElement(
                                         parameter_form=TimeSpan(
                                             title=Title('Run asynchronously'),
                                             label=Label('Interval for collecting data'),
-                                            help_text=Help(
-                                                'Determines how often the plugin will run on a deployed agent.'),
+                                            # help_text=Help(
+                                            #     'Determines how often the plugin will run on a deployed agent.'),
                                             displayed_magnitudes=[TimeMagnitude.SECOND,
                                                                   TimeMagnitude.MINUTE,
                                                                   TimeMagnitude.HOUR,
@@ -155,6 +155,6 @@ rule_spec_yum_bakery = AgentConfig(
     name='yum',
     parameter_form=_parameter_form_yum_bakery,
     topic=Topic.GENERAL,
-    help_text=Help('This will deploy the agent plugin <tt>YUM</tt> '
-                   'for checking package update status.'),
+    # help_text=Help('This will deploy the agent plugin <tt>YUM</tt> '
+    #                'for checking package update status.'),
 )
