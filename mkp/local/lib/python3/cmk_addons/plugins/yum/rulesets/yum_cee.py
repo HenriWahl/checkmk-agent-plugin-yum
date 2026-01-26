@@ -39,11 +39,13 @@ def _migrate_int_to_float(value: object) -> Mapping[str, object]:
     if value.get('deploy'):
         if value['deploy'].get('interval'):
             return {'interval': float(value['deploy']['interval'])}
+        else:
+            return {'interval': DEFAULT_INTERVAL}
     # new simpler interval form
     elif value.get('interval'):
         return {'interval': float(value['interval'])}
     else:
-        return {'interval': DEFAULT_INTERVAL}
+        return value
 
 
 def _parameter_form_yum_bakery() -> Dictionary:
