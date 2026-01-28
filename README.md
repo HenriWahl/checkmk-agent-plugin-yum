@@ -19,4 +19,4 @@ container a **client** container is running, which can be used for testing.
 
 ### 📃 Logging of bakery jobs
 
-When debugging inside the container **checkmk**: `tail -f /omd/sites/cmk//var/log/ui-job-scheduler/*`
+When debugging inside the container **checkmk**: `tail -f /omd/sites/cmk/var/log/ui-job-scheduler/*`
