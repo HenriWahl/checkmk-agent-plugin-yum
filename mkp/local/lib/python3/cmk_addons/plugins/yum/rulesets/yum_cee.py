@@ -88,26 +88,26 @@ def _parameter_form_yum_bakery() -> Dictionary:
     """
     return Dictionary(
         migrate=_migrate_int_to_float,
-        title=Title('YUM/DNF Update Check'),
-        help_text=Help('This will deploy the agent plugin <tt>YUM/DNF</tt>. This will activate the '
-                       'check <tt>YUM/DNF</tt> on RedHat based hosts and monitor pending normal and security updates.'
+        title=Title('YUM Update Check'),
+        help_text=Help('This will deploy the agent plugin <tt>YUM</tt>. This will activate the '
+                       'check <tt>YUM</tt> on RedHat based hosts and monitor pending normal and security updates.'
                        ),
         elements={
             'deployment': DictElement(
                 required=True,
                 parameter_form=CascadingSingleChoice(
-                    title=Title('Deployment options for the YUM/DNF Update Check'),
+                    title=Title('Deployment options for the YUM Update Check'),
                     prefill=DefaultValue('deploy'),
                     help_text=Help(
-                        'Determines how the the <tt>YUM/DNF</tt> plugin will run on a deployed agent or disables it on an deployed agent'),
+                        'Determines how the the <tt>YUM</tt> plugin will run on a deployed agent or disables it on an deployed agent'),
                     elements=[
                         CascadingSingleChoiceElement(
                             name='deploy',
-                            title=Title("Deploy the YUM/DNF Update Check"),
+                            title=Title("Deploy the YUM Update Check"),
                             parameter_form=Dictionary(
-                                title=Title('YUM/DNF Update Check'),
+                                title=Title('YUM Update Check'),
                                 help_text=Help('This will deploy the agent plugin <tt>Yum</tt>. This will activate the '
-                                               'check <tt>YUM/DNF</tt> on RedHat based hosts and monitor pending normal and security updates.'
+                                               'check <tt>YUM</tt> on RedHat based hosts and monitor pending normal and security updates.'
                                                ),
                                 elements={
                                     'interval': DictElement(
@@ -128,7 +128,7 @@ def _parameter_form_yum_bakery() -> Dictionary:
                         ),
                         CascadingSingleChoiceElement(
                             name='no_deploy',
-                            title=Title("Do not deploy the YUM/DNF Update Check"),
+                            title=Title("Do not deploy the YUM Update Check"),
                             parameter_form=FixedValue(value=False),
                         )
                     ]
@@ -139,11 +139,11 @@ def _parameter_form_yum_bakery() -> Dictionary:
 
 
 rule_spec_yum_bakery = AgentConfig(
-    title=Title('YUM/DNF Update Check'),
+    title=Title('YUM Update Check'),
     name='yum',
     parameter_form=_parameter_form_yum_bakery,
     # topic=Topic.APPLICATIONS,
     topic=Topic.OPERATING_SYSTEM,
-    help_text=Help('This will deploy the agent plugin <tt>YUM/DNF</tt> '
+    help_text=Help('This will deploy the agent plugin <tt>YUM</tt> '
                    'for checking package update status.'),
 )

@@ -43,7 +43,7 @@ if len(argv) > 2:
         package_config['author'] = 'Henri Wahl'
         package_config['description'] = 'Checks for updates on RPM-based distributions via yum/dnf.'
         package_config['download_url'] = 'https://github.com/HenriWahl/checkmk-agent-plugin-yum/releases'
-        package_config['title'] = 'YUM/DNF Update Check'
+        package_config['title'] = 'YUM Update Check'
         package_config['version'] = version
         package_config['version.min_required'] = '2.3.0'
 
