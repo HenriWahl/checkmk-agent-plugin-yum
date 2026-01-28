@@ -64,7 +64,7 @@ def _parameter_form_yum():
 
 rule_spec_yum = CheckParameters(
     name="yum",
-    title=Title("YUM / DNF Update Check Parameters"),
+    title=Title("YUM/DNF Update Check Parameters"),
     #topic=Topic.APPLICATIONS,
     topic=Topic.OPERATING_SYSTEM,
     parameter_form=_parameter_form_yum,

@@ -88,39 +88,26 @@ def _parameter_form_yum_bakery() -> Dictionary:
     """
     return Dictionary(
         migrate=_migrate_int_to_float,
-        title=Title('YUM package update check'),
-        help_text=Help('This will deploy the agent plugin <tt>Yum</tt>. This will activate the '
-                       'check <tt>YUM</tt> on RedHat based hosts and monitor pending normal and security updates.'
+        title=Title('YUM/DNF Update Check'),
+        help_text=Help('This will deploy the agent plugin <tt>YUM/DNF</tt>. This will activate the '
+                       'check <tt>YUM/DNF</tt> on RedHat based hosts and monitor pending normal and security updates.'
                        ),
         elements={
-            # 'interval': DictElement(
-            #     parameter_form=TimeSpan(
-            #         title=Title('Custom execution interval'),
-            #         label=Label('Interval for collecting data'),
-            #         help_text=Help(
-            #             'Determines how often the plugin will run on a deployed agent.'),
-            #         displayed_magnitudes=[TimeMagnitude.SECOND,
-            #                               TimeMagnitude.MINUTE,
-            #                               TimeMagnitude.HOUR,
-            #                               TimeMagnitude.DAY],
-            #         prefill=DefaultValue(DEFAULT_INTERVAL),
-            #     )
-            # ),
             'deployment': DictElement(
                 required=True,
                 parameter_form=CascadingSingleChoice(
-                    title=Title('Deployment options for the YUM plugin'),
+                    title=Title('Deployment options for the YUM/DNF Update Check'),
                     prefill=DefaultValue('deploy'),
                     help_text=Help(
-                        'Determines how the the <tt>YUM</tt> plugin will run on a deployed agent or disables it on an deployed agent'),
+                        'Determines how the the <tt>YUM/DNF</tt> plugin will run on a deployed agent or disables it on an deployed agent'),
                     elements=[
                         CascadingSingleChoiceElement(
                             name='deploy',
-                            title=Title("Deploy the YUM plugin"),
+                            title=Title("Deploy the YUM/DNF Update Check"),
                             parameter_form=Dictionary(
-                                title=Title('YUM package update check'),
+                                title=Title('YUM/DNF Update Check'),
                                 help_text=Help('This will deploy the agent plugin <tt>Yum</tt>. This will activate the '
-                                               'check <tt>YUM</tt> on RedHat based hosts and monitor pending normal and security updates.'
+                                               'check <tt>YUM/DNF</tt> on RedHat based hosts and monitor pending normal and security updates.'
                                                ),
                                 elements={
                                     'interval': DictElement(
@@ -141,50 +128,22 @@ def _parameter_form_yum_bakery() -> Dictionary:
                         ),
                         CascadingSingleChoiceElement(
                             name='no_deploy',
-                            title=Title("Do not deploy the YUM plugin"),
+                            title=Title("Do not deploy the YUM/DNF Update Check"),
                             parameter_form=FixedValue(value=False),
                         )
                     ]
                 ),
             ),
-            # 'deploy2': DictElement(
-            #     required=True,
-            #     parameter_form=CascadingSingleChoice(
-            #         title=Title('Deployment options for the Yum plugin.'),
-            #         # prefill=DefaultValue("interval"),
-            #         help_text=Help(
-            #             'Determines how the the <tt>Yum</tt> plugin will run on a deployed agent or disables it on an deployed agent'),
-            #         elements=[
-            #             CascadingSingleChoiceElement(
-            #                 name='deploy',
-            #                 title=Title("Deploy the Yum plugin"),
-            #                 parameter_form=TimeSpan(
-            #                     title=Title('Interval that the plugin runs at on the client'),
-            #                     help_text=Help(
-            #                         'Determines how often that the <tt>Yum</tt> plugin will run on a deployed agent.'),
-            #                     displayed_magnitudes=[TimeMagnitude.SECOND, TimeMagnitude.MINUTE, TimeMagnitude.HOUR,
-            #                                           TimeMagnitude.DAY],
-            #                     # prefill=DefaultValue(129600.0),
-            #                 ),
-            #             ),
-            #             CascadingSingleChoiceElement(
-            #                 name='no_deploy',
-            #                 title=Title("Do not deploy the Yum plugin"),
-            #                 parameter_form=FixedValue(value=None),
-            #             )
-            #         ]
-            #     ),
-            # )
         },
     )
 
 
 rule_spec_yum_bakery = AgentConfig(
-    title=Title('YUM plugin'),
+    title=Title('YUM/DNF Update Check'),
     name='yum',
     parameter_form=_parameter_form_yum_bakery,
     # topic=Topic.APPLICATIONS,
     topic=Topic.OPERATING_SYSTEM,
-    help_text=Help('This will deploy the agent plugin <tt>YUM</tt> '
+    help_text=Help('This will deploy the agent plugin <tt>YUM/DNF</tt> '
                    'for checking package update status.'),
 )
