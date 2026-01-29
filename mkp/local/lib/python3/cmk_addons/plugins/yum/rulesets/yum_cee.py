@@ -96,7 +96,7 @@ def _parameter_form_yum_bakery() -> Dictionary:
             'deployment': DictElement(
                 required=True,
                 parameter_form=CascadingSingleChoice(
-                    title=Title('Deployment options for the YUM Update Check'),
+                    title=Title('Deployment options'),
                     prefill=DefaultValue('deploy'),
                     help_text=Help(
                         'Determines how the the <tt>YUM</tt> plugin will run on a deployed agent or disables it on an deployed agent'),
@@ -142,7 +142,6 @@ rule_spec_yum_bakery = AgentConfig(
     title=Title('YUM Update Check'),
     name='yum',
     parameter_form=_parameter_form_yum_bakery,
-    # topic=Topic.APPLICATIONS,
     topic=Topic.OPERATING_SYSTEM,
     help_text=Help('This will deploy the agent plugin <tt>YUM</tt> '
                    'for checking package update status.'),

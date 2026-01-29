@@ -9,8 +9,10 @@ ARG CMK_SITE_ID=cmk
 
 # python3 and git needed for modify-extension.py
 RUN apt -y update && \
-    apt -y install python3 \
-                   python3-git
+    apt -y install less \
+                   python3 \
+                   python3-git \
+                   vim
 
 # scripts used need to be executable
 COPY dockerfiles/checkmk/modify-extension.py /usr/local/bin
