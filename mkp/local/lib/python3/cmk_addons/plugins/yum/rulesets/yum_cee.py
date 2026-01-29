@@ -129,7 +129,7 @@ def _parameter_form_yum_bakery() -> Dictionary:
                         CascadingSingleChoiceElement(
                             name='no_deploy',
                             title=Title("Do not deploy the YUM Update Check"),
-                            parameter_form=FixedValue(value=False),
+                            parameter_form=FixedValue(value=True),
                         )
                     ]
                 ),

@@ -4,18 +4,57 @@ on:
     tags: 'v*'
 
 jobs:
-  build-package:
+  build-image:
     runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.get_image.outputs.IMAGE }}
     steps:
       - uses: actions/checkout@v4
+      # docker login is needed for pushing the test image
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: get_hash
+        run: echo "HASH=$(find mkp -type f -printf '%p:%s' | xargs | md5sum | cut -d\  -f1)" >> $GITHUB_OUTPUT
+      - id: get_image
+        run: echo "IMAGE=$(echo ghcr.io/${{ github.repository }} | tr '[:upper:]' '[:lower:]'):${{ steps.get_hash.outputs.HASH }}" >> $GITHUB_OUTPUT
+      - run: echo "image ${{ steps.get_image.outputs.IMAGE }}"
       # build container image for package creation
-      - run: /usr/bin/docker build -t ${{ github.job }} -f build/Dockerfile .
-      # actually build .mkp file
-      - run: /usr/bin/docker run --volume $PWD:/source ${{ github.job }}
+      - run: docker pull ${{ steps.get_image.outputs.IMAGE }} || docker build -t ${{ steps.get_image.outputs.IMAGE }} -f dockerfiles/checkmk/Dockerfile .
+      - run: docker push ${{ steps.get_image.outputs.IMAGE }}
+
+  build-package:
+    runs-on: ubuntu-latest
+    needs: build-image
+    container:
+      image: ${{ needs.build-image.outputs.image }}
+      env:
+        CMK: /omd/sites/cmk
+        SU: su - cmk -c
+    steps:
+      - uses: actions/checkout@v4
+      - run: cp -r mkp/local/* ${CMK}/local
+      - run: ${SU} "mkdir ${CMK}/tmp/check_mk"
+      - run: ${SU} "mkp template yum"
+      - run: git config --global --add safe.directory ${PWD}
+      - run: modify-extension.py ${PWD} ${CMK}/tmp/check_mk/yum.manifest.temp
+      # avoid error:
+      # Error removing file /omd/sites/cmk/local/lib/python3/cmk/base/cee/plugins/bakery/yum.py: [Errno 13] Permission denied: '/omd/sites/cmk/local/lib/python3/cmk/base/cee/plugins/bakery/yum.py'
+      # and likewise the `mkp package` fails due to already existing files
+      - run: chmod go+rw ${CMK}/local/lib/python3/cmk/base/cee/plugins/bakery
+      - run: chmod go+rw ${CMK}/local/lib/python3/cmk_addons/plugins/yum/agent_based
+      - run: chmod go+rw ${CMK}/local/lib/python3/cmk_addons/plugins/yum/checkman
+      - run: chmod go+rw ${CMK}/local/lib/python3/cmk_addons/plugins/yum/rulesets
+      - run: cat ${CMK}/tmp/check_mk/yum.manifest.temp
+      - run: ${SU} "mkp package ${CMK}/tmp/check_mk/yum.manifest.temp"
+      # copy created extension package back to workspace
+      - run: cp ${CMK}/var/check_mk/packages_local/*.mkp ${PWD}/mkp/
       # upload results
       - uses: actions/upload-artifact@v4
         with:
-          path: ./*.mkp
+          path: ./mkp/*.mkp
           retention-days: 1
 
   github-release:
