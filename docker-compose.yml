@@ -2,13 +2,12 @@ services:
   checkmk:
     # feature equivalent to enterprise edition but just 30 days trial
     # nice to check extension GUI stuff
-    image: checkmk
+    image: checkmk-yum
     build:
       context: .
       dockerfile: dockerfiles/checkmk/Dockerfile
       args:
-        #CHECKMK_VERSION: 2.4.0p19
-        CHECKMK_VERSION: 2.3.0p38
+        CHECKMK_VERSION: 2.4.0p19
         CMK_PASSWORD: cmkadmin
         CMK_SITE_ID: cmk
     restart: unless-stopped
@@ -17,7 +16,7 @@ services:
     environment:
       TZ: Europe/Berlin
     volumes:
-      # meta-info about yum package for Checkmk extensions management
+      # meta-info about package for Checkmk extensions management
       - ${PWD}/mkp/var/check_mk/packages/yum:/omd/sites/cmk/var/check_mk/packages/yum
       # agent plugin to run on monitored hosts
       - ${PWD}/mkp/local/share/check_mk/agents/plugins/yum:/omd/sites/cmk/local/share/check_mk/agents/plugins/yum
