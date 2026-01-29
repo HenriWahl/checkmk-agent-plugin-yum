@@ -32,6 +32,10 @@ def _migrateInt(value: object) -> Mapping[str, object]:
   - {'deploy': ('deploy', {...})} - new format (already migrated)
   """
   if value is not None:
+    # Ensure value is a dictionary
+    if not isinstance(value, dict):
+      return {'deploy': ('nointerval', None)}
+    
     # Handle old format: {'interval': value}
     if 'interval' in value and 'deploy' not in value:
       interval_value = value["interval"]

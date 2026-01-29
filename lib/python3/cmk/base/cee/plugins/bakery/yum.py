@@ -37,19 +37,20 @@ def get_yum_files(conf: Any) -> FileGenerator:
                        source=Path('yum'),
                        interval=interval)
           return
+      elif deploy_choice == 'interval':
         # Old intermediate format: {'deploy': ('interval', value)}
-        elif deploy_choice == 'interval':
-          interval = int(deploy_config)
-          yield Plugin(base_os=OS.LINUX,
-                       source=Path('yum'),
-                       interval=interval)
-          return
+        interval = int(deploy_config)
+        yield Plugin(base_os=OS.LINUX,
+                     source=Path('yum'),
+                     interval=interval)
+        return
       elif deploy_choice == 'nointerval':
         return
     
     # Backward compatibility: old format {'interval': value}
     if 'interval' in conf:
       interval = conf.get('interval')
+      # Explicitly handle None - deploy without interval (synchronous)
       if interval is not None:
         interval = int(interval)
       yield Plugin(base_os=OS.LINUX,
