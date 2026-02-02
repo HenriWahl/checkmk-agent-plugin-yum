@@ -112,7 +112,7 @@ def _parameter_form_yum_bakery() -> Dictionary:
 rule_spec_yum_bakery = AgentConfig(
     title=Title('YUM Update Check'),
     name='yum',
-    parameter_form=_parameter_form_yum_bakery2,
+    parameter_form=_parameter_form_yum_bakery,
     topic=Topic.OPERATING_SYSTEM,
     help_text=Help('This will deploy the agent plugin <tt>YUM</tt> '
                    'for checking package update status.'),
