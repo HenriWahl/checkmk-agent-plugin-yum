@@ -6,7 +6,8 @@ on:
 
 jobs:
   build-image:
-    runs-on: ubuntu-latest
+    #runs-on: ubuntu-latest
+    runs-on: self-hosted
     outputs:
       image: ${{ steps.get_image.outputs.IMAGE }}
     steps:
@@ -27,7 +28,8 @@ jobs:
       - run: docker push ${{ steps.get_image.outputs.IMAGE }}
 
   build-package:
-    runs-on: ubuntu-latest
+    #runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: build-image
     container:
       image: ${{ needs.build-image.outputs.image }}
@@ -59,7 +61,8 @@ jobs:
           retention-days: 1
 
   github-release:
-    runs-on: ubuntu-latest
+    #runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: build-package
     steps:
       - uses: actions/download-artifact@v4
