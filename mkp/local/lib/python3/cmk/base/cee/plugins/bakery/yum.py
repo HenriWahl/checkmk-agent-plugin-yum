@@ -39,12 +39,12 @@ def get_yum_files(conf: Any) -> FileGenerator:
                 except (TypeError, ValueError):
                     interval = None
 
-    # only makes sense on Linux so just create for that OS
-    yield Plugin(
-        base_os=OS.LINUX,
-        source=Path('yum'),
-        interval=interval
-    )
+        # only makes sense on Linux so just create for that OS
+        yield Plugin(
+            base_os=OS.LINUX,
+            source=Path('yum'),
+            interval=interval
+        )
 
 
 # register the bakery plugin with its arguments
