@@ -19,29 +19,32 @@ def get_yum_files(conf: Any) -> FileGenerator:
     with open('/tmp/debug.txt', 'a') as debug_file:
         debug_file.write(f'config: {conf}\n')
 
+    # default to no interval - will be filled if set in config
+    interval = None
+
     if isinstance(conf, dict):
-        # default to no interval - will be filled if set in config
-        interval = None
+        deploy = conf.get('deploy')
+        if deploy is None:
+            if isinstance(conf.get('interval'), dict):
+                try:
+                    interval = int(conf.get('interval'))
+                except (TypeError, ValueError):
+                    interval = None
 
-        if isinstance(conf, dict):
-            deploy = conf.get('deploy')
-            if deploy is None:
-                return
+        if isinstance(deploy, dict):
+            interval = deploy.get('interval')
+            if interval is not None:
+                try:
+                    interval = int(interval)
+                except (TypeError, ValueError):
+                    interval = None
 
-            if isinstance(deploy, dict):
-                interval = deploy.get('interval')
-                if interval is not None:
-                    try:
-                        interval = int(interval)
-                    except (TypeError, ValueError):
-                        interval = None
-
-        # only makes sense on Linux so just create for that OS
-        yield Plugin(
-            base_os=OS.LINUX,
-            source=Path('yum'),
-            interval=interval
-        )
+    # only makes sense on Linux so just create for that OS
+    yield Plugin(
+        base_os=OS.LINUX,
+        source=Path('yum'),
+        interval=interval
+    )
 
 
 # register the bakery plugin with its arguments
