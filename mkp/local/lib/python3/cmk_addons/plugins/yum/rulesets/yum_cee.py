@@ -46,7 +46,7 @@ def _migrate_int_to_float(value: object) -> Mapping[str, object]:
             else:
                 return {
                     'deploy': {
-                        'interval': False
+                        'interval': dict()
                     }
                 }
         # fix a short time used interval instead of deploy
@@ -60,14 +60,14 @@ def _migrate_int_to_float(value: object) -> Mapping[str, object]:
         elif value.get('nointerval'):
             return {
                 'deploy': {
-                    'interval': False
+                    'interval': dict()
                 }
             }
         else:
             return value
     else:
         return {
-                'deploy': False
+                'deploy': dict()
         }
 
 

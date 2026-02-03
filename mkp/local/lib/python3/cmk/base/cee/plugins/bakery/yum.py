@@ -25,6 +25,7 @@ def get_yum_files(conf: Any) -> FileGenerator:
 
     if isinstance(conf, dict):
         deploy = conf.get('deploy')
+        # backward compatible
         if deploy is None:
             if isinstance(conf.get('interval'), dict):
                 try:
@@ -33,6 +34,7 @@ def get_yum_files(conf: Any) -> FileGenerator:
                     interval = None
                 deploy_plugin = True
 
+
         if isinstance(deploy, dict):
             interval = deploy.get('interval')
             if interval is not None:
@@ -40,7 +42,7 @@ def get_yum_files(conf: Any) -> FileGenerator:
                     interval = int(interval)
                 except (TypeError, ValueError):
                     interval = None
-            deploy_plugin = True
+                deploy_plugin = True
 
         if deploy_plugin:
             # only makes sense on Linux so just create for that OS
