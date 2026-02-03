@@ -25,11 +25,28 @@ services:
       # already updated part of plugin
       - ${PWD}/mkp/local/lib/python3/cmk_addons/plugins/yum:/omd/sites/cmk/local/lib/python3/cmk_addons/plugins/yum
 
-  client:
+  client-rocky-8:
     # client for testing, can be added in web GUI
-    image: checkmk-client
+    image: checkmk-client-rocky-8
     build:
       context: dockerfiles/client
+      dockerfile: Dockerfile_rocky-8
+    restart: unless-stopped
+    environment:
+      # check_mk_agent needs to know where to store its state
+      MK_VARDIR: /var/lib/check_mk_agent
+    post_start:
+      # check_mk_agent requires executable plugins
+      - command: /usr/bin/chmod -R +x /usr/lib/check_mk_agent/plugins
+    volumes:
+      - ${PWD}/mkp/local/share/check_mk/agents/plugins:/usr/lib/check_mk_agent/plugins
+
+  client-fedora-43:
+    # client for testing, can be added in web GUI
+    image: checkmk-client-fedora-43
+    build:
+      context: dockerfiles/client
+      dockerfile: Dockerfile_fedora-43
     restart: unless-stopped
     environment:
       # check_mk_agent needs to know where to store its state
