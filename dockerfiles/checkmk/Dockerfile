@@ -17,6 +17,8 @@ RUN apt -y update && \
 # scripts used need to be executable
 COPY dockerfiles/checkmk/modify-extension.py /usr/local/bin
 RUN chmod +x /usr/local/bin/modify-extension.py
+COPY dockerfiles/checkmk/build-mkp.sh /usr/local/bin
+RUN chmod +x /usr/local/bin/build-mkp.sh
 
 # Create site 'cmk'
 RUN omd create --admin-password "${CMK_PASSWORD}" "${CMK_SITE_ID}"

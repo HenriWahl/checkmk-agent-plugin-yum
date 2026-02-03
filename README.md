@@ -20,3 +20,11 @@ container a **client** container is running, which can be used for testing.
 ### 📃 Logging of bakery jobs
 
 When debugging inside the container **checkmk**: `tail -f /omd/sites/cmk/var/log/ui-job-scheduler/*`
+
+### 🏗️ Building 
+
+To build the package manually, run:
+
+```bash
+docker run -it --rm --volume $PWD:/source --workdir /source checkmk-yum build-mkp.sh
+```

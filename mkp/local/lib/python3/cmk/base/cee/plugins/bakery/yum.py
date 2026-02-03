@@ -11,8 +11,8 @@ def get_yum_files(conf: Any) -> FileGenerator:
     """
     Simple bakery plugin generator for yum
 
-    conf looks like: {'deployment': ('deploy', {'interval': 18060.0})}
-    mind the tuple!
+    conf looks like: ('deploy', {'interval': 18060.0})
+
     """
 
     # debugging
