@@ -49,10 +49,6 @@ def _migrate_int_to_float(value: object) -> Mapping[str, object]:
                     }
                 }
             else:
-
-                with open('/tmp/debug-migrate_int_to_float-no-interval.txt', 'a') as debug_file:
-                    debug_file.write(f'value: {value}\n')
-
                 return {
                     'deploy': {
                         'interval': dict()
@@ -75,9 +71,10 @@ def _migrate_int_to_float(value: object) -> Mapping[str, object]:
         else:
             return value
     else:
-        return {
-                'deploy': dict()
-        }
+        # return {
+        #         'deploy': dict()
+        # }
+        return dict()
 
 
 def _parameter_form_yum_bakery() -> Dictionary:

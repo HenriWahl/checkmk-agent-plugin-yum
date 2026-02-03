@@ -34,7 +34,6 @@ def get_yum_files(conf: Any) -> FileGenerator:
                     interval = None
                 deploy_plugin = True
 
-
         elif isinstance(deploy, dict):
             interval = deploy.get('interval')
             if interval is not None:
