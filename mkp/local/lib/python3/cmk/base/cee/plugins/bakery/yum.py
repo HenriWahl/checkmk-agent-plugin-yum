@@ -16,7 +16,7 @@ def get_yum_files(conf: Any) -> FileGenerator:
     """
 
     # debugging
-    with open('/tmp/debug.txt', 'a') as debug_file:
+    with open('/tmp/debug-get_yum_files.txt', 'a') as debug_file:
         debug_file.write(f'config: {conf}\n')
 
     # default to no interval - will be filled if set in config
@@ -35,7 +35,7 @@ def get_yum_files(conf: Any) -> FileGenerator:
                 deploy_plugin = True
 
 
-        if isinstance(deploy, dict):
+        elif isinstance(deploy, dict):
             interval = deploy.get('interval')
             if interval is not None:
                 try:

@@ -34,6 +34,11 @@ def _migrate_int_to_float(value: object) -> Mapping[str, object]:
     """
     migrate from integer interval to float interval
     """
+
+    # debugging
+    with open('/tmp/debug-migrate_int_to_float.txt', 'a') as debug_file:
+        debug_file.write(f'value: {value}\n')
+
     if value is not None:
         # backward compatibility - migrate from deploy to deployment
         if value.get('deploy'):
