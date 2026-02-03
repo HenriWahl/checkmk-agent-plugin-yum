@@ -1,0 +1,36 @@
+FROM fedora:43
+
+LABEL maintainer="henri@nagstamon.de"
+LABEL description="Fedora 43 with Check_MK agent running via supervisord on port 6556"
+
+# Install required packages (no xinetd as per requirements)
+RUN dnf -y update && \
+    dnf -y install \
+        supervisor \
+        nmap-ncat \
+        && \
+    dnf clean all
+
+# Copy and install Check_MK agent from repository
+COPY check_mk_agent.linux /usr/bin/check_mk_agent
+RUN chmod +x /usr/bin/check_mk_agent
+
+# Create a wrapper script to run check_mk_agent as a TCP service on port 6556
+RUN printf '#!/bin/bash\n\
+# Run check_mk_agent as a TCP service on port 6556 using netcat\n\
+while true; do\n\
+    /usr/bin/nc -l -p 6556 -c '\''/usr/bin/check_mk_agent'\'' || sleep 1\n\
+done\n' > /usr/local/bin/check_mk_agent_tcp && \
+    chmod +x /usr/local/bin/check_mk_agent_tcp
+
+# Copy supervisord configuration files
+COPY supervisord-checkmk.conf /etc/supervisord.conf
+
+# Create log directory for supervisor
+RUN mkdir -p /var/log/supervisor
+
+# Expose check_mk_agent port
+EXPOSE 6556
+
+# Start supervisord
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
