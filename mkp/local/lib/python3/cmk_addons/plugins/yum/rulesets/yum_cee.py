@@ -35,12 +35,11 @@ def _migrate_int_to_float(value: object) -> Mapping[str, object]:
     migrate from integer interval to float interval
     """
 
-    # debugging
-    with open('/tmp/debug-migrate_int_to_float.txt', 'a') as debug_file:
-        debug_file.write(f'value: {value}\n')
+    # debugging - might become an option later
+    #with open('/tmp/debug-migrate_int_to_float.txt', 'a') as debug_file:
+    #    debug_file.write(f'value: {value}\n')
 
     if value is not None:
-        # backward compatibility - migrate from deploy to deployment
         if value.get('deploy'):
             if value['deploy'].get('interval'):
                 return {
@@ -54,7 +53,7 @@ def _migrate_int_to_float(value: object) -> Mapping[str, object]:
                         'interval': dict()
                     }
                 }
-        # fix a short time used interval instead of deploy
+        # backward compatibility - migrate from interval to deploy
         elif value.get('interval'):
             return {
                 'deploy': {
@@ -71,9 +70,7 @@ def _migrate_int_to_float(value: object) -> Mapping[str, object]:
         else:
             return value
     else:
-        # return {
-        #         'deploy': dict()
-        # }
+        # empty dictionary means no deployment
         return dict()
 
 

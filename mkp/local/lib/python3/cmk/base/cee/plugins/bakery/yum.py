@@ -15,17 +15,18 @@ def get_yum_files(conf: Any) -> FileGenerator:
 
     """
 
-    # debugging
-    with open('/tmp/debug-get_yum_files.txt', 'a') as debug_file:
-        debug_file.write(f'config: {conf}\n')
+    # debugging - might become an option later
+    #with open('/tmp/debug-get_yum_files.txt', 'a') as debug_file:
+    #    debug_file.write(f'config: {conf}\n')
 
     # default to no interval - will be filled if set in config
     interval = None
+    # flag to decide if plugin should be deployed
     deploy_plugin = False
 
     if isinstance(conf, dict):
         deploy = conf.get('deploy')
-        # backward compatible
+        # backward compatible - first check if 'interval' is still used
         if deploy is None:
             if isinstance(conf.get('interval'), dict):
                 try:
@@ -33,7 +34,7 @@ def get_yum_files(conf: Any) -> FileGenerator:
                 except (TypeError, ValueError):
                     interval = None
                 deploy_plugin = True
-
+        # existence of 'deploy' dict
         elif isinstance(deploy, dict):
             interval = deploy.get('interval')
             if interval is not None:
