@@ -41,7 +41,7 @@ def get_yum_files(conf: Any) -> FileGenerator:
                     interval = int(interval)
                 except (TypeError, ValueError):
                     interval = None
-                deploy_plugin = True
+            deploy_plugin = True
 
         if deploy_plugin:
             # only makes sense on Linux so just create for that OS
