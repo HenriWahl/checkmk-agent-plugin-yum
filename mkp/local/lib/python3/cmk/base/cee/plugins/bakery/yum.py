@@ -21,6 +21,7 @@ def get_yum_files(conf: Any) -> FileGenerator:
 
     # default to no interval - will be filled if set in config
     interval = None
+    deploy_plugin = False
 
     if isinstance(conf, dict):
         deploy = conf.get('deploy')
@@ -30,6 +31,7 @@ def get_yum_files(conf: Any) -> FileGenerator:
                     interval = int(conf.get('interval'))
                 except (TypeError, ValueError):
                     interval = None
+                deploy_plugin = True
 
         if isinstance(deploy, dict):
             interval = deploy.get('interval')
@@ -38,13 +40,15 @@ def get_yum_files(conf: Any) -> FileGenerator:
                     interval = int(interval)
                 except (TypeError, ValueError):
                     interval = None
+            deploy_plugin = True
 
-        # only makes sense on Linux so just create for that OS
-        yield Plugin(
-            base_os=OS.LINUX,
-            source=Path('yum'),
-            interval=interval
-        )
+        if deploy_plugin:
+            # only makes sense on Linux so just create for that OS
+            yield Plugin(
+                base_os=OS.LINUX,
+                source=Path('yum'),
+                interval=interval
+            )
 
 
 # register the bakery plugin with its arguments
