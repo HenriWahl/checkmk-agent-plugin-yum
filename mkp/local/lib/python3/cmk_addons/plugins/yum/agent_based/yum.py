@@ -84,7 +84,7 @@ def yum_parse(string_table: List[List[str]]) -> Section:
         if len(string_table[2]) > 1:
             security_packages_list = string_table[2][1]
         last_update_timestamp = int(string_table[3][0])
-    except KeyError:
+    except (IndexError, KeyError):
         pass
 
     return Section(
