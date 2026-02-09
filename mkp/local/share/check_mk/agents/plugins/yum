@@ -60,18 +60,21 @@ if command -v dnf5 >/dev/null 2>&1; then
     HISTORY_CMD="dnf5 history list"
     LIST_CMD="dnf5 list --upgrades"
     SECURITY_SUPPORTED=1  # dnf5 supports security updates via check-upgrade --security
+    YUM_CURRENT="$(ls -lR /var/cache/libdnf5/ 2>/dev/null)"
 # Check for regular dnf (Fedora 22+ up to 40, CentOS 8+)
 elif command -v dnf >/dev/null 2>&1; then
     PKG_MGR="dnf"
     HISTORY_CMD="dnf history list"
     LIST_CMD="dnf list updates"
     SECURITY_SUPPORTED=1
+    YUM_CURRENT="$(ls -lR /var/cache/dnf/ 2>/dev/null)"
 # Fall back to yum (CentOS/RHEL 6-7)
 elif command -v yum >/dev/null 2>&1; then
     PKG_MGR="yum"
     HISTORY_CMD="yum history list"
     LIST_CMD="yum list updates"
     SECURITY_SUPPORTED=1
+    YUM_CURRENT="$(ls -lR /var/cache/yum/ 2>/dev/null)"
 else
     echo "ERROR: No supported package manager found (yum, dnf, or dnf5)"
     exit 2
@@ -140,25 +143,14 @@ echo "<<<yum>>>"
 # Update cached data if YUM fingerprint has changed OR machine has recently rebooted.
 if [ "$YUM_CURRENT" != "$YUM_CACHED" ] || [ ! -s "$CACHE_RESULT_CHECK" ]
 then
-    count=0
-    # Check for running package manager processes
-    while [ -n "$(pgrep -f "(python|/usr/bin/).*/(yum|dnf)" | head -1)" ]; do
-        if [ $count -eq 3 ]; then
-            echo "ERROR: Tried to run $PKG_MGR for 30 secs but another package manager instance was running"
-            exit 2
-        else
-            ((count++))
-            sleep 10
-        fi
-    done
-
     # Check if reboot required for new kernel
     KERNEL_PACKAGE=$(rpm -qf --qf "%{NAME}" /boot/config-$(uname -r))
     if [ -z "$KERNEL_PACKAGE" ]; then
         BOOT_REQUIRED="no"
     else
         RUNNING_KERNEL=$(rpm -qf --qf "%{VERSION}-%{RELEASE}\n" /boot/config-$(uname -r))
-        LATEST_KERNEL=$(rpm -q --qf "%{INSTALLTIME} %{VERSION}-%{RELEASE}\n" $KERNEL_PACKAGE | sort -nr | head -n1 | cut -d' ' -f2- )
+        LATEST_KERNEL=$(rpm -q --last --qf "%{INSTALLTIME}\t%{VERSION}-%{RELEASE}\n" $KERNEL_PACKAGE | grep -v $KERNEL_PACKAGE | sort -r | head -n1 | awk '{ print $2 }')
+        LATEST_KERNEL="${LATEST_KERNEL%"${LATEST_KERNEL##*[![:space:]]}"}" # remove tailing whitespace
 
         if [[ "$RUNNING_KERNEL" == "$LATEST_KERNEL" ]]; then
             BOOT_REQUIRED="no"
@@ -169,7 +161,8 @@ then
 
     # Count available updates - different commands for different package managers
     if [ "$PKG_MGR" = "dnf5" ]; then
-        UPDATES=$(timeout 25s dnf5 list --upgrades 2>/dev/null | grep -E "^[a-zA-Z]" | wc -l || echo "-1")
+        LOCKEDRE=$(dnf5 versionlock list | grep -o -P '(?<=^Package name: ).+' | tr '\n' '|' | sed 's/|/\\.|/g; s/|$//')
+        UPDATES=$(timeout 25s dnf5 list --upgrades 2>/dev/null | grep -E "^[a-zA-Z]" | tail -n +2 | grep -v -P "$LOCKEDRE" | wc -l || echo "-1")
     else
         UPDATES=$(timeout 25s $PKG_MGR -C --noplugins --quiet list updates 2>/dev/null | grep "\." | cut -d' ' -f1 | wc -l || echo "-1")
     fi
