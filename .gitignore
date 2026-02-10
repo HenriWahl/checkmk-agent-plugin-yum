@@ -1,2 +1,29 @@
-.gitignore
-.idea
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Build artifacts
+*.mkp
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -1,258 +1,303 @@
 #!/bin/bash
-# Set the version to be captured in newer versions of CheckMK Inventory
+# CheckMK Agent Plugin: YUM/DNF Update Check
+#
+# Checks for available package updates on RPM-based distributions.
+# Supports: Red Hat Enterprise Linux 8-10 and compatible distributions
+#           (AlmaLinux, Rocky Linux, Oracle Linux, CentOS Stream)
+# Package managers: dnf5 (RHEL 10+), dnf (RHEL 8-9), yum (as dnf wrapper)
+#
+# Output format (<<<yum>>> section):
+#   Line 1: Reboot required (yes/no)
+#   Line 2: Number of available updates (-1 on error)
+#   Line 3: Number of security updates [-1 error, -2 unsupported] [comma-separated list]
+#   Line 4: Unix timestamp of last update (-1 if unknown)
+#
+# Copyright 2015, Henri Wahl <h.wahl@ifw-dresden.de>
+# Copyright 2018, Moritz Schlarb <schlarbm@uni-mainz.de>
+# Copyright 2021, Marco Lenhardt <marco.lenhardt@ontec.at>
+# Copyright 2021, Henrik Giessel <henrik.giessel@yahoo.de>
+# Copyright 2023, Timo Klecker <klecker@decoit.de>
+# Copyright 2026, Felix Kraus <felix.kraus@mhb.de>
+#
+# License: GPLv3+
+
+# Set the version to be captured in newer versions of CheckMK inventory
 CMK_VERSION="0.0.0"
 
-if [ -z "$MK_VARDIR" ]; then
-    echo "ERROR: Unable to load ENV variables"
-    exit 2
+# Disable globbing to prevent accidental pathname expansion
+set -o noglob
+
+# --- Constants ---
+readonly CMD_TIMEOUT=25
+
+# --- Output error and exit gracefully ---
+# Exit 0 so the Checkmk agent continues processing other plugins.
+# The server-side check plugin handles the ERROR: prefix.
+die() {
+    echo "<<<yum>>>"
+    echo "ERROR: $1"
+    exit 0
+}
+
+# --- Validate environment ---
+if [[ -z "${MK_VARDIR:-}" ]]; then
+    die "MK_VARDIR not set - agent environment unavailable"
 fi
 
-BOOT_REQUIRED=no
-UPDATES=0
-SECURITY_UPDATES=0
-CACHE_RESULT_CHECK=$MK_VARDIR/cache/yum_result.cache
-CACHE_YUM_UPDATE=$MK_VARDIR/cache/yum_update.cache
-CACHE_PREV_UPTIME=$MK_VARDIR/cache/yum_uptime.cache
-LAST_UPDATE_TIMESTAMP=-1
+# --- Cache file paths ---
+readonly CACHE_RESULT="${MK_VARDIR}/cache/yum_result.cache"
+readonly CACHE_PKG_STATE="${MK_VARDIR}/cache/yum_pkg_state.cache"
+readonly CACHE_PREV_UPTIME="${MK_VARDIR}/cache/yum_uptime.cache"
 
-# Check which distribution and major version we are running
-if [ -f "/etc/os-release" ]; then
-  # Read required fields
-  . /etc/os-release
-  
-  # Extract major version
-  MAJOR_VERSION=$(echo "$VERSION_ID" | cut -d. -f1)
+# --- Cache file helpers ---
 
-  # Normalize DISTRO_ID using ID_LIKE if available
-  if echo "$ID_LIKE" | grep -qw "rhel"; then
-    DISTRO_ID="rhel"
-  else
-    DISTRO_ID="$ID"
-  fi
-elif [ -f "/etc/redhat-release" ]; then
-  # EL6 or other legacy RHEL-like systems
-  RELEASE_TEXT=$(cat /etc/redhat-release)
+validate_cache_file() {
+    local filepath="$1"
+    if [[ -L "$filepath" ]]; then
+        die "Cache file is a symlink: ${filepath}"
+    fi
+    if [[ -e "$filepath" && ! -f "$filepath" ]]; then
+        die "Cache path is not a regular file: ${filepath}"
+    fi
+}
 
-  if echo "$RELEASE_TEXT" | grep -qi "CentOS"; then
-    DISTRO_ID="centos"
-  elif echo "$RELEASE_TEXT" | grep -qi "Red Hat"; then
-    DISTRO_ID="rhel"
-  else
-    DISTRO_ID="unknown"
-  fi
+init_cache_file() {
+    local filepath="$1"
+    local default_content="${2:-}"
+    if [[ ! -e "$filepath" ]]; then
+        echo -n "$default_content" > "$filepath"
+    fi
+    validate_cache_file "$filepath"
+}
 
-  # Extract major version number (e.g., "6" from "release 6.10")
-  MAJOR_VERSION=$(echo "$RELEASE_TEXT" | grep -oE 'release [0-9]+' | awk '{print $2}')
-else
-  MAJOR_VERSION=0
-  DISTRO_ID="unknown"
-fi
+# --- Detect distribution ---
 
-# Determine which package manager to use based on distribution and availability
-PKG_MGR=""
-HISTORY_CMD=""
-LIST_CMD=""
-SECURITY_SUPPORTED=0
+detect_distribution() {
+    # Variables from /etc/os-release (SC2154)
+    # shellcheck disable=SC2154
+    if [[ -f /etc/os-release ]]; then
+        # shellcheck source=/dev/null
+        . /etc/os-release
+        MAJOR_VERSION="${VERSION_ID%%.*}"
 
-# Check for dnf5 first (Fedora 41+)
-if command -v dnf5 >/dev/null 2>&1; then
-    PKG_MGR="dnf5"
-    HISTORY_CMD="dnf5 history list"
-    LIST_CMD="dnf5 list --upgrades"
-    SECURITY_SUPPORTED=1  # dnf5 supports security updates via check-upgrade --security
-# Check for regular dnf (Fedora 22+ up to 40, CentOS 8+)
-elif command -v dnf >/dev/null 2>&1; then
-    PKG_MGR="dnf"
-    HISTORY_CMD="dnf history list"
-    LIST_CMD="dnf list updates"
-    SECURITY_SUPPORTED=1
-# Fall back to yum (CentOS/RHEL 6-7)
-elif command -v yum >/dev/null 2>&1; then
-    PKG_MGR="yum"
-    HISTORY_CMD="yum history list"
-    LIST_CMD="yum list updates"
-    SECURITY_SUPPORTED=1
-else
-    echo "ERROR: No supported package manager found (yum, dnf, or dnf5)"
-    exit 2
-fi
-
-# get current package manager state - use cache directory contents as fingerprint
-YUM_CURRENT="$(ls -lR /var/cache/{yum,dnf}/ 2>/dev/null)"
-
-# check if cached listing of /var/cache/yum already exists - create empty one otherwise
-if [ ! -e "$CACHE_YUM_UPDATE" ]
-then
-    touch "$CACHE_YUM_UPDATE"
-elif [ ! -f "$CACHE_YUM_UPDATE" ] || [ -L "$CACHE_YUM_UPDATE" ]
-then
-    # something is wrong here...
-    echo "ERROR: invalid cache file"
-    exit 2
-else
-    # get cached information
-    YUM_CACHED=$(cat "$CACHE_YUM_UPDATE")
-fi
-
-# check if cached check result already exists and is nothing but a file
-if [ ! -e "$CACHE_RESULT_CHECK"  ]
-then
-    touch "$CACHE_RESULT_CHECK"
-elif [ ! -f "$CACHE_RESULT_CHECK" ] || [ -L "$CACHE_RESULT_CHECK" ]
-then
-    # something is wrong here...
-    echo "ERROR: invalid cache file"
-    exit 2
-fi
-
-# check if system has rebooted - if so, remove cached check file to avoid wrong "reboot required"-state
-RUNNING_SECS=$(cat /proc/uptime | cut -d" " -f1 | cut -d"." -f1)
-
-# check if cache file with previously seen uptime is existing - create one otherwise
-if [ ! -e "$CACHE_PREV_UPTIME" ]
-then
-    echo 0 > "$CACHE_PREV_UPTIME"
-    PREV_UPTIME=0
-elif [ ! -f "$CACHE_PREV_UPTIME" ] || [ -L "$CACHE_PREV_UPTIME" ]
-then
-    # something is wrong here...
-    echo "ERROR: invalid cache file"
-    exit 2
-else
-    # get cached information
-    PREV_UPTIME=$(cat "$CACHE_PREV_UPTIME")
-    # save current uptime
-    echo "$RUNNING_SECS" > "$CACHE_PREV_UPTIME"
-fi
-
-# check if current uptime is lower than cached last seen uptime to detect reboot
-if (( RUNNING_SECS < PREV_UPTIME ))
-then
-    # remove pre-reboot cache which requires reboot
-    rm -f "$CACHE_RESULT_CHECK"
-    # create empty check cache
-    touch "$CACHE_RESULT_CHECK"
-fi
-
-echo "<<<yum>>>"
-
-# compare current and cached yum information
-# Update cached data if YUM fingerprint has changed OR machine has recently rebooted.
-if [ "$YUM_CURRENT" != "$YUM_CACHED" ] || [ ! -s "$CACHE_RESULT_CHECK" ]
-then
-    count=0
-    # Check for running package manager processes
-    while [ -n "$(pgrep -f "(python|/usr/bin/).*/(yum|dnf)" | head -1)" ]; do
-        if [ $count -eq 3 ]; then
-            echo "ERROR: Tried to run $PKG_MGR for 30 secs but another package manager instance was running"
-            exit 2
+        # Normalise to RHEL family using ID_LIKE
+        if [[ "${ID_LIKE:-}" == *rhel* ]] || [[ "${ID}" == "rhel" ]]; then
+            DISTRO_ID="rhel"
         else
-            ((count++))
-            sleep 10
+            DISTRO_ID="${ID}"
         fi
+    else
+        MAJOR_VERSION=0
+        DISTRO_ID="unknown"
+    fi
+}
+
+# --- Detect package manager ---
+
+detect_package_manager() {
+    if command -v dnf5 >/dev/null 2>&1; then
+        PKG_MGR="dnf5"
+    elif command -v dnf >/dev/null 2>&1; then
+        PKG_MGR="dnf"
+    elif command -v yum >/dev/null 2>&1; then
+        PKG_MGR="yum"
+    else
+        die "No supported package manager found (dnf5, dnf, or yum)"
+    fi
+}
+
+# --- Wait for other package manager instances ---
+
+wait_for_package_manager() {
+    local attempts=0
+    while pgrep -f "(python|/usr/bin/).*(yum|dnf)" >/dev/null 2>&1; do
+        if (( attempts >= 3 )); then
+            die "Another package manager instance still running after 30s"
+        fi
+        (( attempts++ ))
+        sleep 10
     done
+}
 
-    # Check if reboot required for new kernel
-    KERNEL_PACKAGE=$(rpm -qf --qf "%{NAME}" /boot/config-$(uname -r))
-    if [ -z "$KERNEL_PACKAGE" ]; then
-        BOOT_REQUIRED="no"
-    else
-        RUNNING_KERNEL=$(rpm -qf --qf "%{VERSION}-%{RELEASE}\n" /boot/config-$(uname -r))
-        LATEST_KERNEL=$(rpm -q --qf "%{INSTALLTIME} %{VERSION}-%{RELEASE}\n" $KERNEL_PACKAGE | sort -nr | head -n1 | cut -d' ' -f2- )
+# --- Check if kernel update requires reboot ---
 
-        if [[ "$RUNNING_KERNEL" == "$LATEST_KERNEL" ]]; then
-            BOOT_REQUIRED="no"
-        else
-            BOOT_REQUIRED="yes"
-        fi
+check_reboot_required() {
+    local kernel_package running_kernel latest_kernel
+
+    kernel_package=$(rpm -qf --qf "%{NAME}" "/boot/config-$(uname -r)" 2>/dev/null) || true
+    if [[ -z "$kernel_package" ]]; then
+        echo "no"
+        return
     fi
 
-    # Count available updates - different commands for different package managers
-    if [ "$PKG_MGR" = "dnf5" ]; then
-        UPDATES=$(timeout 25s dnf5 list --upgrades 2>/dev/null | grep -E "^[a-zA-Z]" | wc -l || echo "-1")
-    else
-        UPDATES=$(timeout 25s $PKG_MGR -C --noplugins --quiet list updates 2>/dev/null | grep "\." | cut -d' ' -f1 | wc -l || echo "-1")
-    fi
+    running_kernel=$(rpm -qf --qf "%{VERSION}-%{RELEASE}\n" "/boot/config-$(uname -r)" 2>/dev/null) || true
+    latest_kernel=$(rpm -q --qf "%{INSTALLTIME} %{VERSION}-%{RELEASE}\n" "$kernel_package" 2>/dev/null \
+        | sort -nr | head -n1 | cut -d' ' -f2-) || true
 
-    # Check for security updates if supported
-    if [ $SECURITY_SUPPORTED -eq 1 ]; then
-        if [ "$PKG_MGR" = "dnf5" ]; then
-            # dnf5 uses different command for security updates
-            SECURITY_OUTPUT=$(timeout 25s dnf5 -C --quiet check-upgrade --security 2>/dev/null)
-            SECURITY_UPDATES=$(echo "$SECURITY_OUTPUT" | grep -E "^[a-zA-Z0-9]" | wc -l || echo "-1")
-            SECURITY_UPDATES_LIST=$(echo "$SECURITY_OUTPUT" | grep -E "^[a-zA-Z0-9]" | awk '{print $1}' | sed 's/\.[^.]*$//' | paste -sd, -)
-        else
-            # Test if --security is available for traditional yum/dnf
-            timeout 25s $PKG_MGR -C --noplugins --quiet --security list updates > /dev/null 2>&1
-            if [ $? -eq 0 ]; then
-                if [ "$PKG_MGR" = "dnf" ]; then
-                    SECURITY_OUTPUT=$(timeout 25s dnf -C --noplugins --quiet --security list updates 2>/dev/null)
-                else
-                    SECURITY_OUTPUT=$(timeout 25s yum -C --noplugins --quiet --security list updates 2>/dev/null)
-                fi
-                SECURITY_UPDATES=$(echo "$SECURITY_OUTPUT" | grep "\." | cut -d' ' -f1 | wc -l || echo "-1")
-                SECURITY_UPDATES_LIST=$(echo "$SECURITY_OUTPUT" | grep "\." | cut -d' ' -f1 | sed 's/\.[^.]*$//' |  paste -sd, -)
-            else
-                # --security not supported with this version
-                SECURITY_UPDATES="-2"
-                SECURITY_UPDATES_LIST=""
+    if [[ "$running_kernel" == "$latest_kernel" ]]; then
+        echo "no"
+    else
+        echo "yes"
+    fi
+}
+
+# --- Count available package updates ---
+
+count_updates() {
+    local count
+    case "$PKG_MGR" in
+        dnf5)
+            count=$(timeout "${CMD_TIMEOUT}s" dnf5 -C --quiet list --upgrades 2>/dev/null \
+                | grep -cE '^[a-zA-Z0-9]') || true
+            ;;
+        dnf|yum)
+            count=$(timeout "${CMD_TIMEOUT}s" "$PKG_MGR" -C --noplugins --quiet list updates 2>/dev/null \
+                | grep -c '\.') || true
+            ;;
+    esac
+    echo "${count:-0}"
+}
+
+# --- Count security updates and list affected packages ---
+
+count_security_updates() {
+    local output count pkg_list
+    output=""
+    count=0
+    pkg_list=""
+
+    case "$PKG_MGR" in
+        dnf5)
+            output=$(timeout "${CMD_TIMEOUT}s" dnf5 -C --quiet check-upgrade --security 2>/dev/null) || true
+            if [[ -n "$output" ]]; then
+                count=$(grep -cE '^[a-zA-Z0-9]' <<< "$output") || count=0
+                pkg_list=$(grep -E '^[a-zA-Z0-9]' <<< "$output" \
+                    | awk '{print $1}' | sed 's/\.[^.]*$//' | paste -sd, -) || true
             fi
-        fi
+            ;;
+        dnf|yum)
+            if timeout "${CMD_TIMEOUT}s" "$PKG_MGR" -C --noplugins --quiet --security list updates >/dev/null 2>&1; then
+                output=$(timeout "${CMD_TIMEOUT}s" "$PKG_MGR" -C --noplugins --quiet --security list updates 2>/dev/null) || true
+                if [[ -n "$output" ]]; then
+                    count=$(grep -c '\.' <<< "$output") || count=0
+                    pkg_list=$(grep '\.' <<< "$output" \
+                        | awk '{print $1}' | sed 's/\.[^.]*$//' | paste -sd, -) || true
+                fi
+            else
+                # --security flag not supported on this system
+                echo "-2"
+                return
+            fi
+            ;;
+    esac
+
+    printf '%s %s\n' "${count:-0}" "${pkg_list:-}"
+}
+
+# --- Determine timestamp of last successful update ---
+
+get_last_update_timestamp() {
+    local timestamp=""
+
+    case "$PKG_MGR" in
+        dnf5)
+            timestamp=$(dnf5 history list 2>/dev/null \
+                | awk '/[Uu]pgrade|[Uu]pdate/ {print $5" "$6}' \
+                | head -n1 \
+                | date -f - +"%s" 2>/dev/null) || true
+            ;;
+        dnf|yum)
+            timestamp=$("$PKG_MGR" -C --quiet --noplugins history list 2>/dev/null \
+                | awk '{if(NR>2)print}' \
+                | grep -E ' U | Upgrade| Update' \
+                | head -n1 \
+                | awk -F'|' '{print $3}' \
+                | date -f - +"%s" 2>/dev/null) || true
+            ;;
+    esac
+
+    echo "${timestamp:--1}"
+}
+
+# --- Detect system reboot by comparing uptime ---
+
+check_for_reboot() {
+    local current_uptime prev_uptime
+
+    current_uptime=$(cut -d" " -f1 /proc/uptime | cut -d"." -f1)
+    prev_uptime=$(cat "$CACHE_PREV_UPTIME" 2>/dev/null) || true
+    : "${prev_uptime:=0}"
+
+    printf '%s\n' "$current_uptime" > "$CACHE_PREV_UPTIME"
+
+    if (( current_uptime < prev_uptime )); then
+        # System was rebooted — clear stale results
+        : > "$CACHE_RESULT"
+        return 0
+    fi
+    return 1
+}
+
+# --- Package cache fingerprint (detects repo metadata changes) ---
+
+get_pkg_state_fingerprint() {
+    # Use explicit paths to avoid brace expansion issues in some shells
+    ls -lR /var/cache/yum/ /var/cache/dnf/ 2>/dev/null || true
+}
+
+# --- Main ---
+
+main() {
+    detect_distribution
+    detect_package_manager
+
+    # Initialise cache files
+    init_cache_file "$CACHE_RESULT"
+    init_cache_file "$CACHE_PKG_STATE"
+    init_cache_file "$CACHE_PREV_UPTIME" "0"
+
+    echo "<<<yum>>>"
+
+    # Clear cache on reboot
+    check_for_reboot || true
+
+    # Compare fingerprint to decide whether a fresh check is needed
+    local current_state cached_state
+    current_state=$(get_pkg_state_fingerprint)
+    cached_state=$(cat "$CACHE_PKG_STATE" 2>/dev/null) || true
+    : "${cached_state:=}"
+
+    if [[ "$current_state" != "$cached_state" ]] || [[ ! -s "$CACHE_RESULT" ]]; then
+        wait_for_package_manager
+
+        local boot_required updates security_info last_timestamp
+        boot_required=$(check_reboot_required)
+        updates=$(count_updates)
+        security_info=$(count_security_updates)
+        last_timestamp=$(get_last_update_timestamp)
+
+        # Output results
+        echo "$boot_required"
+        echo "$updates"
+        echo "$security_info"
+        echo "$last_timestamp"
+
+        # Persist fingerprint
+        validate_cache_file "$CACHE_PKG_STATE"
+        printf '%s\n' "$current_state" > "$CACHE_PKG_STATE"
+
+        # Persist results
+        validate_cache_file "$CACHE_RESULT"
+        {
+            echo "$boot_required"
+            echo "$updates"
+            echo "$security_info"
+            echo "$last_timestamp"
+        } > "$CACHE_RESULT"
     else
-        # Package manager doesn't support security updates
-        SECURITY_UPDATES="-2"
-        SECURITY_UPDATES_LIST=""
+        # Serve from cache
+        cat "$CACHE_RESULT"
     fi
+}
 
-    # Check last time of installed Updates from history
-    if [ "$PKG_MGR" = "dnf5" ]; then
-        # dnf5 has different history output format - look for upgrade/update actions, not download
-        LAST_UPDATE_TIMESTAMP=$(dnf5 history list 2>/dev/null | awk '/upgrade --refresh|update[^-]|update$/ {print $5" "$6}' | head -n1 | date -f - +"%s" 2>/dev/null || echo "-1")
-    else
-        HISTORY_CMD="$PKG_MGR -C --quiet --noplugins history list"
-
-        # Use 'all' for RHEL/CentOS 7 or below
-        if { [ "$DISTRO_ID" = "rhel" ] || [ "$DISTRO_ID" = "centos" ]; } && [ "$MAJOR_VERSION" -le 7 ]; then
-            HISTORY_CMD="$HISTORY_CMD all"
-        fi
-
-        # Run the history command and extract the last update timestamp
-        LAST_UPDATE_TIMESTAMP=$($HISTORY_CMD | awk '{if(NR>2)print}' | grep -E ' U | Upgrade| Update' | head -n1 | awk -F'|' '{print $3}' | date -f - +"%s" 2>/dev/null || echo "-1")
-    fi
-
-    # Add check in case this is a brand new built machine
-    if [ "$LAST_UPDATE_TIMESTAMP" = "" ]; then 
-        LAST_UPDATE_TIMESTAMP=-1
-    fi
-
-    echo "$BOOT_REQUIRED"
-    echo "$UPDATES"
-    echo "$SECURITY_UPDATES $SECURITY_UPDATES_LIST"
-    echo "$LAST_UPDATE_TIMESTAMP"
-
-    # cache check yum/dnf
-    # check if cached check already exists and is nothing but a file
-    if [ -f "$CACHE_YUM_UPDATE" ] || [ ! -L "$CACHE_YUM_UPDATE" ]; then
-        echo "$YUM_CURRENT" > "$CACHE_YUM_UPDATE"
-    else
-        # something is wrong here...
-        echo "ERROR: invalid check cache file"
-        exit 2
-    fi
-
-    # cache check results
-    if [ -f "$CACHE_RESULT_CHECK" ] || [ ! -L "$CACHE_RESULT_CHECK" ]
-    then
-        echo "$BOOT_REQUIRED" > "$CACHE_RESULT_CHECK"
-        echo "$UPDATES" >> "$CACHE_RESULT_CHECK"
-        echo "$SECURITY_UPDATES $SECURITY_UPDATES_LIST" >> "$CACHE_RESULT_CHECK"
-        echo "$LAST_UPDATE_TIMESTAMP" >> "$CACHE_RESULT_CHECK"
-    else
-        # something is wrong here...
-        echo "ERROR: invalid check result cache file"
-        exit 2
-    fi
-else
-    # use cache file
-    cat "$CACHE_RESULT_CHECK"
-fi
+main

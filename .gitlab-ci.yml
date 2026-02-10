@@ -1,0 +1,117 @@
+# GitLab CI/CD pipeline for the YUM/DNF Checkmk plugin.
+# Runs linting, tests, and builds the MKP package.
+
+stages:
+  - lint
+  - test
+  - build
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+# Cache pip downloads across jobs
+cache:
+  paths:
+    - .cache/pip
+
+# =============================================================================
+# Linting Stage
+# =============================================================================
+
+shellcheck:
+  stage: lint
+  image: koalaman/shellcheck-alpine:stable
+  script:
+    - shellcheck agents/plugins/yum build/build-entrypoint.sh
+  allow_failure: false
+
+ruff-lint:
+  stage: lint
+  image: python:3.12-slim
+  before_script:
+    - pip install ruff
+  script:
+    - ruff check lib/ build/build-modify-extension.py
+  allow_failure: false
+
+ruff-format:
+  stage: lint
+  image: python:3.12-slim
+  before_script:
+    - pip install ruff
+  script:
+    - ruff format --check lib/ build/build-modify-extension.py
+  allow_failure: true  # Formatting is advisory
+
+mypy:
+  stage: lint
+  image: python:3.12-slim
+  before_script:
+    - pip install mypy
+  script:
+    # Type check only the build script (check plugin needs Checkmk stubs)
+    - mypy --ignore-missing-imports build/build-modify-extension.py
+  allow_failure: true  # Type checking is advisory without Checkmk stubs
+
+# =============================================================================
+# Test Stage
+# =============================================================================
+
+bats-tests:
+  stage: test
+  image: bats/bats:latest
+  variables:
+    MK_VARDIR: /tmp/mk_vardir
+  before_script:
+    - mkdir -p ${MK_VARDIR}/cache
+  script:
+    - bats tests/test_agent_yum.bats
+  allow_failure: true  # May fail on non-RPM runners
+
+# Python tests require Checkmk libraries; uncomment if you have a custom runner
+# pytest:
+#   stage: test
+#   image: python:3.12
+#   script:
+#     - pip install pytest
+#     - pytest tests/
+
+# =============================================================================
+# Build Stage
+# =============================================================================
+
+build-mkp:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+  before_script:
+    - docker info
+  script:
+    - docker build -t checkmk-yum-build -f build/Dockerfile .
+    - docker run --rm -v "$PWD:/source" checkmk-yum-build
+  artifacts:
+    paths:
+      - "*.mkp"
+    expire_in: 30 days
+  only:
+    - main
+    - master
+    - tags
+
+# Alternative: Build using Podman (for RHEL-based GitLab runners)
+# Uncomment and adjust tags to match your runner configuration
+# build-mkp-podman:
+#   stage: build
+#   tags:
+#     - podman
+#     - rhel
+#   script:
+#     - podman build -t checkmk-yum-build -f build/Dockerfile .
+#     - podman run --rm -v "$PWD:/source:Z" checkmk-yum-build
+#   artifacts:
+#     paths:
+#       - "*.mkp"
+#     expire_in: 30 days

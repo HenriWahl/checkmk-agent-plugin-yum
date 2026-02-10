@@ -1,45 +1,43 @@
 #!/usr/bin/env bash
-# CLI steps done like described in https://docs.checkmk.com/latest/en/mkps.html
+# Build entrypoint: packages the YUM/DNF check plugin as an MKP extension.
+# Runs inside the Checkmk Docker container.
+# See https://docs.checkmk.com/latest/en/mkps.html
 
 set -e
 
 SOURCE=/source
 CMK=/omd/sites/cmk
 
-cd $CMK/local
+cd "$CMK/local"
 
-# copy lib
-cp -R $SOURCE/lib/* ./lib/
+# Copy plugin library files into the site's local hierarchy
+cp -R "$SOURCE/lib/"* ./lib/
 
 cd share/check_mk
-# copy non-lib
-cp -R $SOURCE/agents .
-# No longer needed as all in lib
-# cp -R $SOURCE/checkman .
-# cp -R $SOURCE/web .
+# Copy agent plugin
+cp -R "$SOURCE/agents" .
 
-# needed for package config file creation
-# has to be done by site user
+# Create the MKP manifest template (must be run as site user)
 su - cmk -c "/omd/sites/cmk/bin/mkp template yum"
 
-# otherwise /source is not accepted
-git config --global --add safe.directory $SOURCE
+# Allow git operations on the mounted source directory
+git config --global --add safe.directory "$SOURCE"
 
-# modify extension config file with correct version number, author etc.
-/build-modify-extension.py $SOURCE $CMK/tmp/check_mk/yum.manifest.temp
+# Inject version number and metadata into the manifest
+/build-modify-extension.py "$SOURCE" "$CMK/tmp/check_mk/yum.manifest.temp"
 
-# avoid error:
-# Error removing file /omd/sites/cmk/local/lib/python3/cmk/base/cee/plugins/bakery/yum.py: [Errno 13] Permission denied: '/omd/sites/cmk/local/lib/python3/cmk/base/cee/plugins/bakery/yum.py'
-chmod go+rw $CMK/local/lib/python3/cmk/base/cee/plugins/bakery
-chmod go+rw $CMK/local/lib/python3/cmk_addons/plugins/yum/agent_based
-chmod go+rw $CMK/local/lib/python3/cmk_addons/plugins/yum/checkman
-chmod go+rw $CMK/local/lib/python3/cmk_addons/plugins/yum/rulesets
+# Ensure the site user can write to plugin directories during packaging
+chmod go+rw "$CMK/local/lib/python3/cmk/base/plugins/bakery"
+chmod go+rw "$CMK/local/lib/python3/cmk_addons/plugins/yum/agent_based"
+chmod go+rw "$CMK/local/lib/python3/cmk_addons/plugins/yum/checkman"
+chmod go+rw "$CMK/local/lib/python3/cmk_addons/plugins/yum/graphing"
+chmod go+rw "$CMK/local/lib/python3/cmk_addons/plugins/yum/rulesets"
 
-# also to be done by site user is packaging the mkp file
+# Package the MKP (must be run as site user)
 su - cmk -c "/omd/sites/cmk/bin/mkp package $CMK/tmp/check_mk/yum.manifest.temp"
 
-# copy created extension package back into volume
-cp $CMK/var/check_mk/packages_local/*.mkp $SOURCE
+# Copy the built MKP back to the mounted source volume
+cp "$CMK/var/check_mk/packages_local/"*.mkp "$SOURCE"
 
-# let runner user access the created mkp file which is owned by root now
-chmod go+r $SOURCE/*.mkp
+# Let the CI runner user read the created MKP file
+chmod go+r "$SOURCE/"*.mkp
