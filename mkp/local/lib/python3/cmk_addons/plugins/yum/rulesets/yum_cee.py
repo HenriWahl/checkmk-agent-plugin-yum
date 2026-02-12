@@ -29,6 +29,13 @@ from cmk.rulesets.v1.rule_specs import AgentConfig, Topic, Title, Help
 # default interval in seconds
 DEFAULT_INTERVAL = 60.0
 
+# used in migrate method per default - empty dictionary means no deployment
+DEFAULT_CONFIG = {
+    'deploy': {
+        'interval': dict()
+    }
+}
+
 
 def _migrate_int_to_float(value: object) -> Mapping[str, object]:
     """
@@ -36,23 +43,30 @@ def _migrate_int_to_float(value: object) -> Mapping[str, object]:
     """
 
     # debugging - might become an option later
-    #with open('/tmp/debug-migrate_int_to_float.txt', 'a') as debug_file:
+    # with open('/tmp/debug-migrate_int_to_float.txt', 'a') as debug_file:
     #    debug_file.write(f'value: {value}\n')
 
     if value is not None:
         if value.get('deploy'):
-            if value['deploy'].get('interval'):
-                return {
-                    'deploy': {
-                        'interval': float(value['deploy']['interval'])
+            if isinstance(value['deploy'], dict):
+                if value['deploy'].get('interval'):
+                    return {
+                        'deploy': {
+                            'interval': float(value['deploy']['interval'])
+                        }
                     }
-                }
+            # backward compatiblility with tuple
+            elif isinstance(value['deploy'], tuple):
+                if len(value['deploy']) == 2:
+                    return {
+                        'deploy': {
+                            'interval': float(value['deploy'][1])
+                        }
+                    }
+                else:
+                    return DEFAULT_CONFIG
             else:
-                return {
-                    'deploy': {
-                        'interval': dict()
-                    }
-                }
+                return DEFAULT_CONFIG
         # backward compatibility - migrate from interval to deploy
         elif value.get('interval'):
             return {
@@ -60,15 +74,8 @@ def _migrate_int_to_float(value: object) -> Mapping[str, object]:
                     'interval': float(value['interval'])
                 }
             }
-        # backward compatibility
-        elif value.get('nointerval'):
-            return {
-                'deploy': {
-                    'interval': dict()
-                }
-            }
-        else:
-            return value
+        # if no other case matches just give back empty default config
+        return DEFAULT_CONFIG
     else:
         # empty dictionary means no deployment
         return dict()

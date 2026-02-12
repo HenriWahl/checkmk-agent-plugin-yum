@@ -5,7 +5,7 @@ COPY check-mk-agent*.rpm /tmp/
 RUN dnf -y install iproute \
                    lsof \
                    nmap-ncat \
-                   procps-ng \
+                   procps-ng
 
 RUN dnf -y install /tmp/*.rpm && \
     rm -f /tmp/check-mk-agent*.rpm

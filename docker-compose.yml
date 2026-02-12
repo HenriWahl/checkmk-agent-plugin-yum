@@ -7,7 +7,7 @@ services:
       context: .
       dockerfile: dockerfiles/checkmk/Dockerfile
       args:
-        CHECKMK_VERSION: 2.4.0p19
+        CHECKMK_VERSION: 2.4.0p20
         CMK_PASSWORD: cmkadmin
         CMK_SITE_ID: cmk
     restart: unless-stopped
