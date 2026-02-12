@@ -145,7 +145,8 @@ if [ "$YUM_CURRENT" != "$YUM_CACHED" ] || [ ! -s "$CACHE_RESULT_CHECK" ]
 then
     count=0
     # Check for running package manager processes
-    while [ -n "$(pgrep -u root -f "(python|/usr/bin/).*/(yum|dnf)" | head -1)" ]; do
+    while [ -n "$(pgrep -f "(python|/usr/bin/).*/(yum|dnf)" | head -1)" ]; do
+        if [ $count -eq 3 ]; then
             echo "ERROR: Tried to run $PKG_MGR for 30 secs but another package manager instance was running"
             exit 2
         else
