@@ -80,9 +80,6 @@ else
     exit 2
 fi
 
-# get current package manager state - use cache directory contents as fingerprint
-YUM_CURRENT="$(ls -lR /var/cache/{yum,dnf}/ 2>/dev/null)"
-
 # check if cached listing of /var/cache/yum already exists - create empty one otherwise
 if [ ! -e "$CACHE_YUM_UPDATE" ]
 then
