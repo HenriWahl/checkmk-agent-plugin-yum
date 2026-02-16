@@ -57,6 +57,7 @@ from cmk.agent_based.v2 import (
 class Section(NamedTuple):
     reboot_required: Optional[bool]
     packages: int = -1
+    locked_packages_list: Optional[str] = None
     security_packages: int = -1
     security_packages_list: Optional[str] = None
     last_update_timestamp: int = -1
@@ -75,11 +76,14 @@ def yum_parse(string_table: List[List[str]]) -> Section:
         pass
 
     packages = None
+    locked_packages_list = None
     security_packages = None
     security_packages_list = None
     last_update_timestamp = None
     try:
         packages = int(string_table[1][0])
+        if len(string_table[1]) > 1:
+            locked_packages_list = " ".join(string_table[1][1:])
         security_packages = int(string_table[2][0])
         if len(string_table[2]) > 1:
             security_packages_list = string_table[2][1]
@@ -90,6 +94,7 @@ def yum_parse(string_table: List[List[str]]) -> Section:
     return Section(
         reboot_required,
         packages,
+        locked_packages_list,
         security_packages,
         security_packages_list,
         last_update_timestamp)
@@ -118,9 +123,17 @@ def check_yum(params: Dict[str, object], section: Section):
 
     # === Normal Updates ===
     if section.packages < 0:
-        yield Result(state=State.UNKNOWN, summary="No package information available")
+        state = State.UNKNOWN
+        if section.locked_packages_list:
+            summary=f"No package information available ({section.locked_packages_list})"
+        else:
+            summary="No package information available"
     elif section.packages == 0 and section.security_packages == 0:
-        yield Result(state=State.OK, summary="All packages are up to date")
+        state = State.OK
+        if section.locked_packages_list:
+            summary=f"All packages are up to date ({section.locked_packages_list})"
+        else:
+            summary="All packages are up to date"
         yield Metric(name="normal_updates", value=0)
     else:
         mode, levels = params.get("normal")
@@ -134,8 +147,12 @@ def check_yum(params: Dict[str, object], section: Section):
                 state = State.OK
         else:
             state = State.OK
-        yield Result(state=state, summary=f"{section.packages} normal updates available")
+        if section.locked_packages_list:
+            summary=f"{section.packages} normal updates available ({section.locked_packages_list})"
+        else:
+            summary=f"{section.packages} normal updates available"
         yield Metric(name="normal_updates", value=section.packages)
+    yield Result(state=state, summary=summary)
 
     # === Security Updates ===
     if section.security_packages >= 0:
