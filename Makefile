@@ -6,6 +6,20 @@
 SHELL := /bin/bash
 PYTHON := python3
 
+# Proxy build arguments (hardcoded for now — update when moving to CI)
+# These values are used by the build process when running `make build`
+HTTP_PROXY := http://internetproxy.muc.muenchenerhyp.de:8000
+HTTPS_PROXY := http://internetproxy.muc.muenchenerhyp.de:8000
+NO_PROXY := localhost,127.0.0.1,.mhbdomain.int
+http_proxy := http://internetproxy.muc.muenchenerhyp.de:8000
+https_proxy := http://internetproxy.muc.muenchenerhyp.de:8000
+no_proxy := localhost,127.0.0.1,.mhbdomain.int
+
+# Compose --build-arg flags (adds both upper- and lowercase vars)
+BUILD_ARGS := $(if $(HTTP_PROXY),--build-arg HTTP_PROXY=$(HTTP_PROXY) --build-arg http_proxy=$(HTTP_PROXY),) \
+              $(if $(HTTPS_PROXY),--build-arg HTTPS_PROXY=$(HTTPS_PROXY) --build-arg https_proxy=$(HTTPS_PROXY),) \
+              $(if $(NO_PROXY),--build-arg NO_PROXY=$(NO_PROXY) --build-arg no_proxy=$(NO_PROXY),)
+
 # Default target
 help:
 	@echo "Available targets:"
@@ -74,10 +88,10 @@ test-python:
 build:
 	@echo "==> Building MKP package..."
 	@if command -v podman &>/dev/null; then \
-		podman build -t checkmk-yum-build -f build/Dockerfile .; \
+		podman build --format docker $(BUILD_ARGS) -t checkmk-yum-build -f build/Containerfile .; \
 		podman run --rm -v "$$PWD:/source:Z" checkmk-yum-build; \
 	elif command -v docker &>/dev/null; then \
-		docker build -t checkmk-yum-build -f build/Dockerfile .; \
+		docker build $(BUILD_ARGS) -t checkmk-yum-build -f build/Containerfile .; \
 		docker run --rm -v "$$PWD:/source" checkmk-yum-build; \
 	else \
 		echo "ERROR: Neither podman nor docker found"; \

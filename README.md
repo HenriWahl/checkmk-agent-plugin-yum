@@ -55,7 +55,7 @@ The agent plugin automatically detects the best available package manager
    page.
 2. Upload and install via **Setup → Maintenance → Extension packages** in the
    Checkmk GUI, or with the CLI:
-   
+
    ```bash
    mkp install yum-<version>.mkp
    ```
@@ -113,7 +113,7 @@ lib/python3/
       ruleset_yum_bakery.py      # WATO ruleset: bakery configuration
       ruleset_yum_check_parameters.py  # WATO ruleset: check thresholds
 build/
-  Dockerfile                     # Container build environment (CMK 2.4 Raw)
+  Containerfile                  # Container build environment (CMK 2.4 Raw)
   build-entrypoint.sh            # Packages the MKP inside the container
   build-modify-extension.py      # Injects git version into the manifest
 tests/
@@ -132,19 +132,20 @@ tooling is available. Both **Docker** and **Podman** are supported.
 
 ```bash
 # Build the container image
-podman build -t checkmk-yum-build -f build/Dockerfile .
+podman build --format docker -t checkmk-yum-build -f build/Containerfile .
 
 # Run the build (produces an MKP in the repo root)
 podman run --rm -v "$PWD:/source:Z" checkmk-yum-build
 ```
 
 > **Note:** The `:Z` suffix is required on SELinux-enabled systems (RHEL,
-> Fedora) to relabel the volume for container access.
+> Fedora) to relabel the volume for container access. The `--format docker`
+> flag suppresses HEALTHCHECK warnings from the base image.
 
 ### Using Docker
 
 ```bash
-docker build -t checkmk-yum-build -f build/Dockerfile .
+docker build -t checkmk-yum-build -f build/Containerfile .
 docker run --rm -v "$PWD:/source" checkmk-yum-build
 ```
 

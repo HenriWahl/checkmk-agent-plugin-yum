@@ -90,7 +90,7 @@ build-mkp:
   before_script:
     - docker info
   script:
-    - docker build -t checkmk-yum-build -f build/Dockerfile .
+    - docker build -t checkmk-yum-build -f build/Containerfile .
     - docker run --rm -v "$PWD:/source" checkmk-yum-build
   artifacts:
     paths:
@@ -109,7 +109,7 @@ build-mkp:
 #     - podman
 #     - rhel
 #   script:
-#     - podman build -t checkmk-yum-build -f build/Dockerfile .
+#     - podman build --format docker -t checkmk-yum-build -f build/Containerfile .
 #     - podman run --rm -v "$PWD:/source:Z" checkmk-yum-build
 #   artifacts:
 #     paths:
