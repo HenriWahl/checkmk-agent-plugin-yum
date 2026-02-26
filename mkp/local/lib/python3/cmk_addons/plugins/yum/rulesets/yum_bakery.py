@@ -29,10 +29,9 @@ from cmk.rulesets.v1.rule_specs import AgentConfig, Topic, Title, Help
 # default interval in seconds
 DEFAULT_INTERVAL = 60.0
 
-# used in migrate method per default - empty dictionary means no deployment
+# used in migrate method per default - empty dictionary means no asynchronous runs
 DEFAULT_CONFIG = {
     'deploy': {
-        'interval': dict()
     }
 }
 

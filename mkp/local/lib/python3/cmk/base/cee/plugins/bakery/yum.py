@@ -16,8 +16,8 @@ def get_yum_files(conf: Any) -> FileGenerator:
     """
 
     # debugging - might become an option later
-    #with open('/tmp/debug-get_yum_files.txt', 'a') as debug_file:
-    #    debug_file.write(f'config: {conf}\n')
+    with open('/tmp/debug-get_yum_files.txt', 'a') as debug_file:
+       debug_file.write(f'config: {conf}\n')
 
     # default to no interval - will be filled if set in config
     interval = None
