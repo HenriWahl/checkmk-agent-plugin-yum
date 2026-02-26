@@ -16,8 +16,8 @@ def get_yum_files(conf: Any) -> FileGenerator:
     """
 
     # debugging - might become an option later
-    with open('/tmp/debug-get_yum_files.txt', 'a') as debug_file:
-       debug_file.write(f'config: {conf}\n')
+    #with open('/tmp/debug-get_yum_files.txt', 'a') as debug_file:
+    #   debug_file.write(f'config: {conf}\n')
 
     # default to no interval - will be filled if set in config
     interval = None
@@ -43,6 +43,11 @@ def get_yum_files(conf: Any) -> FileGenerator:
                 except (TypeError, ValueError):
                     interval = None
             deploy_plugin = True
+
+        # debugging - might become an option later
+        # with open('/tmp/debug.txt', 'a') as debug_file:
+        #     debug_file.write(f'conf: {conf}\n')
+        #     debug_file.write(f'deploy_plugin: {deploy_plugin}\n')
 
         if deploy_plugin:
             # only makes sense on Linux so just create for that OS
