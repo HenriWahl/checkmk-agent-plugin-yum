@@ -93,11 +93,11 @@ def yum_parse(string_table: List[List[str]]) -> Section:
 
     return Section(
         reboot_required,
-        packages,
+        packages if packages is not None else -1,
         locked_packages_list,
-        security_packages,
+        security_packages if security_packages is not None else -1,
         security_packages_list,
-        last_update_timestamp)
+        last_update_timestamp if last_update_timestamp is not None else -1)
 
 
 agent_section_yum = AgentSection(
