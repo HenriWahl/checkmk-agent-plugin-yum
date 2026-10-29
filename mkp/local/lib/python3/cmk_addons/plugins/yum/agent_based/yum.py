@@ -183,13 +183,15 @@ def check_yum(params: Dict[str, object], section: Section):
         yield Metric(name="security_updates", value=0)
 
     # === Last Update Timestamp ===
+    # if configured, only show the last update time without influencing the service state
+    ignore_last_update = params.get("last_update_ignore", False)
     if section.last_update_timestamp >= 0:
         threshold_days = params.get("last_update_time_diff", 60)
         threshold = threshold_days * 24 * 60 * 60
         level = params.get("last_update_state", State.WARN)
         age = int(time()) - section.last_update_timestamp
 
-        if age < threshold:
+        if ignore_last_update or age < threshold:
             yield Result(
                 state=State.OK,
                 summary=f"Last update was at {render.datetime(section.last_update_timestamp)}",
@@ -206,7 +208,7 @@ def check_yum(params: Dict[str, object], section: Section):
             )
         yield Metric(name="last_update_timestamp", value=section.last_update_timestamp)
     else:
-        level = params.get("last_update_state", State.WARN)
+        level = State.OK if ignore_last_update else params.get("last_update_state", State.WARN)
         yield Result(state=State(level), summary="No timestamp for last update available")
         yield Metric(name="last_update_timestamp", value=0)
 
@@ -229,5 +231,6 @@ check_plugin_yum = CheckPlugin(
         "security": ("fixed", (1, 1)),
         "last_update_state": 1,
         "last_update_time_diff": 60,
+        "last_update_ignore": False,
     },
 )

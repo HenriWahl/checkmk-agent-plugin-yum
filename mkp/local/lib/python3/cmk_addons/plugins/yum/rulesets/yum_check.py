@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Checkmk 2.4 rule specification for YUM Update Check"""
 
-from cmk.rulesets.v1 import Title
+from cmk.rulesets.v1 import Help, Label, Title
 from cmk.rulesets.v1.form_specs import (
+    BooleanChoice,
     DefaultValue,
     DictElement,
     Dictionary,
@@ -55,6 +56,19 @@ def _parameter_form_yum():
                 parameter_form=ServiceState(
                     title=Title("Change State based on last run update (default OK)"),
                     prefill=DefaultValue(ServiceState.OK),
+                ),
+                required=False,
+            ),
+            "last_update_ignore": DictElement(
+                parameter_form=BooleanChoice(
+                    title=Title("Ignore time of last update"),
+                    label=Label("Only show the time of the last update, do not change the state"),
+                    help_text=Help(
+                        "Useful if updates are installed by other tools like Ansible. When enabled, "
+                        "the time of the last update is only shown in the service output and "
+                        "neither its age nor a missing timestamp affects the service state."
+                    ),
+                    prefill=DefaultValue(False),
                 ),
                 required=False,
             ),

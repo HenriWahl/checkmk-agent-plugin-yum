@@ -80,6 +80,10 @@ else
     exit 2
 fi
 
+# include plugin version in fingerprint so results cached by an older plugin version get refreshed
+YUM_CURRENT="plugin version: $CMK_VERSION
+$YUM_CURRENT"
+
 # check if cached listing of /var/cache/yum already exists - create empty one otherwise
 if [ ! -e "$CACHE_YUM_UPDATE" ]
 then
@@ -215,8 +219,18 @@ then
 
     # Check last time of installed Updates from history
     if [ "$PKG_MGR" = "dnf5" ]; then
-        # dnf5 has different history output format - look for upgrade/update actions, not download
-        LAST_UPDATE_TIMESTAMP=$(dnf5 history list 2>/dev/null | awk '/upgrade --refresh|update[^-]|update$/ {print $5" "$6}' | head -n1 | date -f - +"%s" 2>/dev/null || echo "-1")
+        # dnf5 leaves the "Action(s)" column of 'history list' empty and its "Command line" column is
+        # truncated - tools like Ansible even set their own description (e.g. "ansible dnf5 module").
+        # So inspect the packages altered by the most recent transactions and take the newest one
+        # containing an "Upgrade" action, no matter how it was started.
+        HISTORY_IDS=$(LC_ALL=C dnf5 history list 2>/dev/null | awk '$1 ~ /^[0-9]+$/ {print $1}' | head -n 50)
+        if [ -n "$HISTORY_IDS" ]; then
+            LAST_UPDATE_TIMESTAMP=$(LC_ALL=C dnf5 history info $HISTORY_IDS 2>/dev/null | awk '
+                /^Transaction ID/ { begin = "" }
+                /^Begin time/ { sub(/^Begin time *: */, ""); begin = $0 }
+                $1 == "Upgrade" && begin != "" { print begin; begin = "" }
+            ' | sort -r | head -n1 | date -f - +"%s" 2>/dev/null || echo "-1")
+        fi
     else
         HISTORY_CMD="$PKG_MGR -C --quiet --noplugins history list"
 

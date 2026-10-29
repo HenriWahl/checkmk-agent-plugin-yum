@@ -13,6 +13,11 @@ description:
  This state can be overriden via a WATO rule.
  It gets warning state if there are any updates available.
 
+ The time of the last update is taken from the package manager history,
+ so updates installed by tools like Ansible are recognized too. If the
+ last update time should not affect the state at all, enable
+ "Ignore time of last update" in the WATO rule - the time is then only shown.
+
 inventory:
  One service will be created for each system where the {yum}
  plugin produces a non-empty output.
